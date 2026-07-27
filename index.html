@@ -1,461 +1,5315 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Écrit, Partage</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            background-color: #f4f4f4;
-        }
-        .header {
-            background-color: #ffffff;
-            border-bottom: 1px solid #ddd;
-            padding: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .header .menu {
-            display: flex;
-        }
-        .header .menu a {
-            text-decoration: none;
-            color: #333;
-            font-size: 18px;
-            margin: 0 15px;
-            padding: 10px;
-            border-radius: 5px;
-            text-align: center;
-        }
-        .header .menu a:hover {
-            background-color: #f0f0f0;
-        }
-        .main-content, .explore-tweets, .profile-setup, .profile-view, .settings {
-            padding: 20px;
-            display: none;
-            overflow-y: auto;
-        }
-        .tweet-box {
-            margin-bottom: 20px;
-        }
-        .tweet-box textarea {
-            width: 100%;
-            height: 80px;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            margin-bottom: 10px;
-            box-sizing: border-box;
-        }
-        .tweet-box input[type="file"] {
-            margin-bottom: 10px;
-        }
-        .tweet-box button {
-            background-color: #1DA1F2;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .tweet-box button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-        .tweet-list {
-            margin-top: 20px;
-        }
-        .tweet {
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            padding: 10px;
-            margin-bottom: 10px;
-            background-color: #fff;
-            position: relative;
-        }
-        .tweet-profile {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .tweet-profile img {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            margin-right: 10px;
-        }
-        .tweet-profile span {
-            font-weight: bold;
-        }
-        .tweet-time {
-            color: #888;
-            font-size: 12px;
-            margin-bottom: 10px;
-        }
-        .tweet-image {
-            max-width: 300px;
-            max-height: 200px;
-            width: auto;
-            height: auto;
-            border-radius: 5px;
-            margin-bottom: 10px;
-        }
-        .tweet-actions {
-            display: flex;
-            gap: 10px;
-        }
-        .tweet-actions button {
-            background-color: #1DA1F2;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .tweet-actions button:hover {
-            background-color: #0d8bf2;
-        }
-        .tweet-comments {
-            margin-top: 10px;
-            border-top: 1px solid #ddd;
-            padding-top: 10px;
-        }
-        .tweet-comments textarea {
-            width: calc(100% - 22px);
-            height: 50px;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            box-sizing: border-box;
-            margin-bottom: 10px;
-        }
-        .comment {
-            margin-bottom: 10px;
-        }
-        .comment-profile img {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            margin-right: 10px;
-        }
-        .comment-profile span {
-            font-weight: bold;
-        }
-        .comment-content {
-            background-color: #f9f9f9;
-            border-radius: 5px;
-            padding: 10px;
-        }
-        .settings select {
-            width: 100%;
-            padding: 5px;
-        }
-        .settings label {
-            display: block;
-            margin-bottom: 5px;
-        }
-        .settings button {
-            margin-top: 10px;
-        }
-        .success-message {
-            color: green;
-        }
-        .error-message {
-            color: red;
-        }
-    </style>
+
+<meta charset="UTF-8">
+
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0"
+>
+
+<title>GameHub</title>
+
+<style>
+
+/* =====================================================
+   VARIABLES
+===================================================== */
+
+:root{
+
+    --bg:#10100f;
+    --surface:#191917;
+    --surface2:#22221f;
+    --surface3:#2d2d28;
+
+    --border:#393933;
+
+    --text:#f1efe8;
+    --muted:#9d9b92;
+
+    --accent:#c7a15c;
+    --accent-light:#e1c681;
+
+    --green:#76b88b;
+    --red:#c96e6e;
+
+    --white-piece:#f5f2e9;
+    --black-piece:#151515;
+
+    --board-light:#ead9b9;
+    --board-dark:#98704b;
+
+}
+
+/* =====================================================
+   RESET
+===================================================== */
+
+*{
+
+    box-sizing:border-box;
+
+}
+
+html,
+body{
+
+    margin:0;
+
+    min-height:100%;
+
+}
+
+body{
+
+    background:
+        var(--bg);
+
+    color:
+        var(--text);
+
+    font-family:
+
+        Inter,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+}
+
+button,
+input,
+select{
+
+    font:inherit;
+
+}
+
+button{
+
+    cursor:pointer;
+
+}
+
+.hidden{
+
+    display:none!important;
+
+}
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.topbar{
+
+    height:66px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    padding:
+        0 28px;
+
+    border-bottom:
+        1px solid var(--border);
+
+    background:
+        #111110;
+
+}
+
+.logo{
+
+    font-weight:800;
+
+    letter-spacing:.5px;
+
+}
+
+.logo span{
+
+    margin-right:7px;
+
+    color:
+        var(--accent);
+
+}
+
+.icon-btn{
+
+    width:40px;
+
+    height:40px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    color:
+        var(--text);
+
+    background:
+        var(--surface);
+
+    border:
+        1px solid var(--border);
+
+    border-radius:
+        8px;
+
+}
+
+.icon-btn:hover{
+
+    background:
+        var(--surface2);
+
+}
+
+/* =====================================================
+   STRUCTURE
+===================================================== */
+
+main{
+
+    width:
+        min(1250px,100%);
+
+    margin:auto;
+
+    padding:
+        35px 28px;
+
+}
+
+.screen{
+
+    display:none;
+
+}
+
+.screen.active{
+
+    display:block;
+
+}
+
+/* =====================================================
+   BOUTONS
+===================================================== */
+
+.btn{
+
+    padding:
+        10px 15px;
+
+    color:
+        var(--text);
+
+    background:
+        var(--surface2);
+
+    border:
+        1px solid var(--border);
+
+    border-radius:
+        7px;
+
+    transition:.15s;
+
+}
+
+.btn:hover{
+
+    background:
+        var(--surface3);
+
+}
+
+.btn.primary{
+
+    color:#17130c;
+
+    background:
+        var(--accent);
+
+    border-color:
+        var(--accent);
+
+    font-weight:700;
+
+}
+
+.btn.primary:hover{
+
+    background:
+        var(--accent-light);
+
+}
+
+.btn.danger{
+
+    color:white;
+
+    background:
+        var(--red);
+
+    border-color:
+        var(--red);
+
+}
+
+/* =====================================================
+   ACCUEIL
+===================================================== */
+
+.home-header{
+
+    max-width:720px;
+
+    margin:
+        20px auto 30px;
+
+    text-align:center;
+
+}
+
+.home-header h1{
+
+    margin:
+        0 0 10px;
+
+    font-size:
+        clamp(38px,7vw,66px);
+
+    letter-spacing:-2px;
+
+}
+
+.home-header p{
+
+    margin:0;
+
+    color:
+        var(--muted);
+
+}
+
+.search{
+
+    width:
+        min(650px,100%);
+
+    margin:
+        0 auto 35px;
+
+}
+
+.search input{
+
+    width:100%;
+
+    height:52px;
+
+    padding:
+        0 16px;
+
+    color:
+        var(--text);
+
+    background:
+        var(--surface);
+
+    border:
+        1px solid var(--border);
+
+    border-radius:8px;
+
+    outline:none;
+
+}
+
+.search input:focus{
+
+    border-color:
+        var(--accent);
+
+}
+
+.label{
+
+    margin-bottom:14px;
+
+    color:
+        var(--muted);
+
+    font-size:11px;
+
+    font-weight:700;
+
+    letter-spacing:1.5px;
+
+    text-transform:uppercase;
+
+}
+
+.games{
+
+    display:grid;
+
+    grid-template-columns:
+        repeat(
+            auto-fill,
+            minmax(240px,1fr)
+        );
+
+    gap:16px;
+
+}
+
+.game-card{
+
+    padding:24px;
+
+    background:
+        var(--surface);
+
+    border:
+        1px solid var(--border);
+
+    border-radius:10px;
+
+    transition:.2s;
+
+}
+
+.game-card:hover{
+
+    transform:
+        translateY(-3px);
+
+    border-color:
+        #5a5950;
+
+}
+
+.game-icon{
+
+    font-size:48px;
+
+}
+
+.game-card h2{
+
+    margin:
+        16px 0 8px;
+
+}
+
+.game-card p{
+
+    min-height:45px;
+
+    color:
+        var(--muted);
+
+    line-height:1.5;
+
+}
+
+/* =====================================================
+   HEADERS
+===================================================== */
+
+.page-header{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    gap:15px;
+
+    margin-bottom:27px;
+
+}
+
+.page-header h1{
+
+    margin:0;
+
+    font-size:
+        clamp(27px,5vw,42px);
+
+}
+
+.actions{
+
+    display:flex;
+
+    gap:8px;
+
+}
+
+/* =====================================================
+   MENU ECHECS
+===================================================== */
+
+.chess-menu{
+
+    display:grid;
+
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(260px,1fr)
+        );
+
+    gap:16px;
+
+}
+
+.menu-card{
+
+    padding:23px;
+
+    background:
+        var(--surface);
+
+    border:
+        1px solid var(--border);
+
+    border-radius:10px;
+
+}
+
+.menu-card h2{
+
+    margin-top:0;
+
+}
+
+.menu-card p{
+
+    min-height:45px;
+
+    color:
+        var(--muted);
+
+    line-height:1.5;
+
+}
+
+.menu-buttons{
+
+    display:flex;
+
+    flex-wrap:wrap;
+
+    gap:8px;
+
+}
+
+/* =====================================================
+   JEU
+===================================================== */
+
+.game-layout{
+
+    display:grid;
+
+    grid-template-columns:
+        minmax(300px,760px)
+        minmax(270px,350px);
+
+    align-items:start;
+
+    gap:24px;
+
+}
+
+.board-wrapper{
+
+    width:
+        min(100%,760px);
+
+    margin:auto;
+
+}
+
+.board{
+
+    width:100%;
+
+    aspect-ratio:1;
+
+    display:grid;
+
+    grid-template-columns:
+        repeat(8,1fr);
+
+    grid-template-rows:
+        repeat(8,1fr);
+
+    overflow:hidden;
+
+    border-radius:6px;
+
+    box-shadow:
+        0 18px 50px rgba(0,0,0,.4);
+
+}
+
+.square{
+
+    position:relative;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    min-width:0;
+
+    min-height:0;
+
+    cursor:pointer;
+
+    user-select:none;
+
+    touch-action:manipulation;
+
+}
+
+.square.light{
+
+    background:
+        var(--board-light);
+
+}
+
+.square.dark{
+
+    background:
+        var(--board-dark);
+
+}
+
+.square.selected{
+
+    box-shadow:
+        inset 0 0 0 4px var(--accent-light);
+
+}
+
+.square.last{
+
+    background:
+        #c7a75d;
+
+}
+
+.square.legal::after{
+
+    content:"";
+
+    width:24%;
+
+    height:24%;
+
+    background:
+        rgba(0,0,0,.35);
+
+    border-radius:50%;
+
+}
+
+.square.capture::after{
+
+    content:"";
+
+    position:absolute;
+
+    inset:8%;
+
+    border:
+        4px solid rgba(120,0,0,.55);
+
+    border-radius:50%;
+
+}
+
+/* =====================================================
+   PIECES BLANCHES / NOIRES
+===================================================== */
+
+.piece{
+
+    z-index:2;
+
+    font-size:
+        clamp(30px,8vw,78px);
+
+    line-height:1;
+
+}
+
+.piece.white{
+
+    color:
+        var(--white-piece);
+
+    text-shadow:
+
+        -2px -2px 0 #222,
+
+        2px -2px 0 #222,
+
+        -2px 2px 0 #222,
+
+        2px 2px 0 #222,
+
+        0 3px 5px rgba(0,0,0,.5);
+
+}
+
+.piece.black{
+
+    color:
+        var(--black-piece);
+
+    text-shadow:
+
+        -1px -1px 0 #eee,
+
+        1px -1px 0 #eee,
+
+        -1px 1px 0 #eee,
+
+        1px 1px 0 #eee,
+
+        0 3px 5px rgba(0,0,0,.45);
+
+}
+
+/* =====================================================
+   CHRONOMETRES
+===================================================== */
+
+.clocks{
+
+    display:grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap:8px;
+
+    margin-bottom:14px;
+
+}
+
+.clock{
+
+    padding:12px;
+
+    text-align:center;
+
+    background:
+        var(--surface);
+
+    border:
+        1px solid var(--border);
+
+    border-radius:8px;
+
+}
+
+.clock.active{
+
+    border-color:
+        var(--accent);
+
+}
+
+.clock-name{
+
+    color:
+        var(--muted);
+
+    font-size:12px;
+
+}
+
+.clock-time{
+
+    margin-top:4px;
+
+    font-size:
+        clamp(25px,5vw,38px);
+
+    font-weight:700;
+
+}
+
+.thinking{
+
+    margin-top:10px;
+
+    color:
+        var(--accent-light);
+
+}
+
+/* =====================================================
+   PANELS
+===================================================== */
+
+.panel{
+
+    padding:17px;
+
+    background:
+        var(--surface);
+
+    border:
+        1px solid var(--border);
+
+    border-radius:9px;
+
+}
+
+.panel+.panel{
+
+    margin-top:14px;
+
+}
+
+.status{
+
+    margin-bottom:13px;
+
+    padding:11px;
+
+    background:
+        var(--surface2);
+
+    border-radius:6px;
+
+    line-height:1.5;
+
+}
+
+.moves{
+
+    max-height:360px;
+
+    overflow:auto;
+
+}
+
+.move-row{
+
+    display:grid;
+
+    grid-template-columns:
+        35px 1fr 1fr;
+
+    padding:8px 4px;
+
+    color:
+        var(--muted);
+
+    border-bottom:
+        1px solid var(--border);
+
+}
+
+/* =====================================================
+   ONLINE
+===================================================== */
+
+.online-layout{
+
+    display:grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap:18px;
+
+}
+
+.online-card{
+
+    padding:20px;
+
+    background:
+        var(--surface);
+
+    border:
+        1px solid var(--border);
+
+    border-radius:9px;
+
+}
+
+.username-form{
+
+    display:flex;
+
+    gap:8px;
+
+}
+
+.username-form input{
+
+    flex:1;
+
+    min-width:0;
+
+    padding:10px;
+
+    color:
+        var(--text);
+
+    background:
+        var(--surface2);
+
+    border:
+        1px solid var(--border);
+
+    border-radius:7px;
+
+    outline:none;
+
+}
+
+.profile-score{
+
+    margin-top:15px;
+
+    font-size:35px;
+
+    font-weight:800;
+
+    color:
+        var(--accent-light);
+
+}
+
+.players{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:8px;
+
+}
+
+.player{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    padding:11px;
+
+    background:
+        var(--surface2);
+
+    border-radius:7px;
+
+}
+
+.dot{
+
+    display:inline-block;
+
+    width:8px;
+
+    height:8px;
+
+    margin-right:6px;
+
+    background:
+        var(--green);
+
+    border-radius:50%;
+
+}
+
+/* =====================================================
+   PARAMETRES
+===================================================== */
+
+.settings{
+
+    max-width:760px;
+
+}
+
+.setting{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    gap:20px;
+
+    padding:17px 0;
+
+    border-bottom:
+        1px solid var(--border);
+
+}
+
+.setting:last-child{
+
+    border-bottom:0;
+
+}
+
+.setting-text b{
+
+    display:block;
+
+    margin-bottom:5px;
+
+}
+
+.setting-text span{
+
+    color:
+        var(--muted);
+
+    font-size:14px;
+
+}
+
+.switch{
+
+    position:relative;
+
+    width:46px;
+
+    height:25px;
+
+    flex-shrink:0;
+
+    background:#44443e;
+
+    border-radius:20px;
+
+}
+
+.switch::after{
+
+    content:"";
+
+    position:absolute;
+
+    top:3px;
+
+    left:3px;
+
+    width:19px;
+
+    height:19px;
+
+    background:#fff;
+
+    border-radius:50%;
+
+    transition:.2s;
+
+}
+
+.switch.on{
+
+    background:
+        var(--accent);
+
+}
+
+.switch.on::after{
+
+    left:24px;
+
+}
+
+select{
+
+    padding:9px;
+
+    color:
+        var(--text);
+
+    background:
+        var(--surface2);
+
+    border:
+        1px solid var(--border);
+
+    border-radius:7px;
+
+}
+
+/* =====================================================
+   MODALES MODERNES
+===================================================== */
+
+.modal{
+
+    position:fixed;
+
+    inset:0;
+
+    z-index:100;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    padding:20px;
+
+    background:
+        rgba(0,0,0,.75);
+
+    backdrop-filter:
+        blur(7px);
+
+}
+
+.modal-box{
+
+    width:
+        min(430px,100%);
+
+    padding:25px;
+
+    background:
+        var(--surface);
+
+    border:
+        1px solid var(--border);
+
+    border-radius:14px;
+
+    box-shadow:
+        0 25px 80px rgba(0,0,0,.5);
+
+    animation:
+        modalAppear .2s ease;
+
+}
+
+@keyframes modalAppear{
+
+    from{
+
+        opacity:0;
+
+        transform:
+            translateY(12px)
+            scale(.97);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:
+            translateY(0)
+            scale(1);
+
+    }
+
+}
+
+.modal-box h2{
+
+    margin-top:0;
+
+}
+
+.modal-box p{
+
+    color:
+        var(--muted);
+
+    line-height:1.5;
+
+}
+
+.modal-actions{
+
+    display:flex;
+
+    justify-content:flex-end;
+
+    flex-wrap:wrap;
+
+    gap:8px;
+
+    margin-top:22px;
+
+}
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media(max-width:850px){
+
+    main{
+
+        padding:
+            22px 14px;
+
+    }
+
+    .game-layout{
+
+        grid-template-columns:1fr;
+
+    }
+
+    .board-wrapper{
+
+        width:100%;
+
+    }
+
+    .online-layout{
+
+        grid-template-columns:1fr;
+
+    }
+
+}
+
+@media(max-width:500px){
+
+    .topbar{
+
+        padding:
+            0 14px;
+
+    }
+
+    main{
+
+        padding:
+            18px 10px;
+
+    }
+
+    .page-header{
+
+        align-items:flex-start;
+
+    }
+
+    .setting{
+
+        align-items:flex-start;
+
+    }
+
+    .username-form{
+
+        flex-direction:column;
+
+    }
+
+}
+
+</style>
+
 </head>
+
 <body>
-    <div class="header">
-        <div class="menu">
-            <a href="#" onclick="showPublish()">Publier</a>
-            <a href="#" onclick="showExplore()">Explorer</a>
-            <a href="#" onclick="showSettings()">Paramètres</a>
-            <a href="#" onclick="showProfile()">Profil</a>
-        </div>
-    </div>
 
-    <div class="main-content" id="mainContent">
-        <div class="tweet-box">
-            <textarea id="tweetInput" placeholder="Que se passe-t-il ?"></textarea>
-            <input type="file" id="tweetImage" accept="image/*">
-            <button id="publishButton" onclick="postTweet()">Publier</button>
-            <p id="error-message" class="error-message" style="display: none;">Veuillez entrer un message !</p>
-            <p id="profile-error-message" class="error-message" style="display: none;">Veuillez compléter votre profil avant de publier !</p>
-            <p id="success-message" class="success-message" style="display: none;">Votre publication a été publiée !</p>
-        </div>
-    </div>
+<header class="topbar">
 
-    <div class="explore-tweets" id="exploreTweets">
-        <h2>Explorer les Publications</h2>
-        <div class="tweet-list" id="exploreTweetList">
-            <!-- Les tweets des autres utilisateurs s'afficheront ici -->
-        </div>
-    </div>
+<div class="logo">
 
-    <div class="profile-setup" id="profileSetup">
-        <h2>Configurer Votre Profil</h2>
-        <form onsubmit="saveProfile(event)">
-            <label for="profileName">Votre Nom</label>
-            <input type="text" id="profileName" placeholder="Votre Nom" required>
-            <label for="profilePhoto">Choisir une Photo de Profil</label>
-            <input type="file" id="profilePhoto" accept="image/*" required>
-            <button type="submit">Enregistrer Profil</button>
-        </form>
-    </div>
+<span>◈</span>
 
-    <div class="profile-view" id="profileView">
-        <h2>Votre Profil</h2>
-        <img id="profileImage" src="" alt="Profile Image" style="width: 100px; height: 100px; border-radius: 50%;">
-        <h3 id="profileNameDisplay"></h3>
-        <button onclick="editProfile()">Modifier Profil</button>
-        <button class="logout-button" onclick="logout()">Se Déconnecter</button>
-    </div>
+GAMEHUB
 
-    <div class="settings" id="settings">
-        <h2>Paramètres</h2>
-        <form onsubmit="saveSettings(event)">
-            <label for="languageSelect">Langue</label>
-            <select id="languageSelect">
-                <option value="auto">Par Défaut (Langue du Système)</option>
-                <option value="en">English</option>
-                <option value="fr">Français</option>
-                <option value="es">Español</option>
-            </select>
-            <button type="submit">Enregistrer Paramètres</button>
-        </form>
-    </div>
+</div>
 
-    <script>
-        const translations = {
-            en: {
-                title: "Écrit, Partage",
-                publish: "Publish",
-                explore: "Explore",
-                settings: "Settings",
-                profile: "Profile",
-                setupProfile: "Setup Your Profile",
-                saveProfile: "Save Profile",
-                yourProfile: "Your Profile",
-                editProfile: "Edit Profile",
-                logout: "Logout",
-                exploreTweets: "Explore Tweets",
-                tweetPlaceholder: "What's happening?",
-                tweetError: "Please enter a message!",
-                profileError: "Please complete your profile before publishing!",
-                settingsTitle: "Settings",
-                saveSettings: "Save Settings",
-                language: "Language",
-                default: "Default (System Language)"
-            },
-            fr: {
-                title: "Écrit, Partage",
-                publish: "Publier",
-                explore: "Explorer",
-                settings: "Paramètres",
-                profile: "Profil",
-                setupProfile: "Configurer Votre Profil",
-                saveProfile: "Enregistrer Profil",
-                yourProfile: "Votre Profil",
-                editProfile: "Modifier Profil",
-                logout: "Se Déconnecter",
-                exploreTweets: "Explorer les Publications",
-                tweetPlaceholder: "Que se passe-t-il ?",
-                tweetError: "Veuillez entrer un message !",
-                profileError: "Veuillez compléter votre profil avant de publier !",
-                settingsTitle: "Paramètres",
-                saveSettings: "Enregistrer Paramètres",
-                language: "Langue",
-                default: "Par Défaut (Langue du Système)"
-            },
-            es: {
-                title: "Escribir, Compartir",
-                publish: "Publicar",
-                explore: "Explorar",
-                settings: "Configuración",
-                profile: "Perfil",
-                setupProfile: "Configura Tu Perfil",
-                saveProfile: "Guardar Perfil",
-                yourProfile: "Tu Perfil",
-                editProfile: "Editar Perfil",
-                logout: "Cerrar Sesión",
-                exploreTweets: "Explorar Publicaciones",
-                tweetPlaceholder: "¿Qué está pasando?",
-                tweetError: "¡Por favor ingresa un mensaje!",
-                profileError: "¡Completa tu perfil antes de publicar!",
-                settingsTitle: "Configuración",
-                saveSettings: "Guardar Configuración",
-                language: "Idioma",
-                default: "Predeterminado (Idioma del Sistema)"
+<button
+id="homeButton"
+class="icon-btn"
+>
+⌂
+</button>
+
+</header>
+
+<main>
+
+<!-- =====================================================
+     ACCUEIL
+===================================================== -->
+
+<section
+id="homeScreen"
+class="screen active"
+>
+
+<div class="home-header">
+
+<h1>GameHub</h1>
+
+<p>
+Une plateforme pour réunir plusieurs jeux au même endroit.
+</p>
+
+</div>
+
+<div class="search">
+
+<input
+id="gameSearch"
+type="search"
+placeholder="Rechercher un jeu..."
+>
+
+</div>
+
+<div class="label">
+Jeux disponibles
+</div>
+
+<div
+id="gamesGrid"
+class="games"
+>
+
+<div
+class="game-card"
+data-search="echecs chess"
+>
+
+<div class="game-icon">
+♟️
+</div>
+
+<h2>Échecs</h2>
+
+<p>
+Jouez contre une IA, contre une autre personne ou bientôt en ligne.
+</p>
+
+<button
+id="openChessButton"
+class="btn primary"
+>
+Ouvrir
+</button>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- =====================================================
+     MENU ECHECS
+===================================================== -->
+
+<section
+id="chessMenuScreen"
+class="screen"
+>
+
+<div class="page-header">
+
+<h1>♟️ Échecs</h1>
+
+<div class="actions">
+
+<button
+id="backHomeButton"
+class="btn"
+>
+← Accueil
+</button>
+
+<button
+id="settingsButton"
+class="icon-btn"
+>
+⚙
+</button>
+
+</div>
+
+</div>
+
+<div class="chess-menu">
+
+<div class="menu-card">
+
+<h2>🤖 Jouer contre l'IA</h2>
+
+<p>
+Choisissez la difficulté de l'adversaire.
+</p>
+
+<div class="menu-buttons">
+
+<button
+class="btn primary ai-button"
+data-level="amateur"
+>
+Amateur
+</button>
+
+<button
+class="btn primary ai-button"
+data-level="semipro"
+>
+Semi-pro
+</button>
+
+<button
+class="btn primary ai-button"
+data-level="expert"
+>
+Expert
+</button>
+
+</div>
+
+</div>
+
+<div class="menu-card">
+
+<h2>👥 Jouer en local</h2>
+
+<p>
+Deux joueurs peuvent jouer sur le même appareil.
+</p>
+
+<button
+id="localButton"
+class="btn primary"
+>
+Commencer
+</button>
+
+</div>
+
+<div class="menu-card">
+
+<h2>🌐 Jouer en ligne</h2>
+
+<p>
+Affrontez bientôt d'autres joueurs connectés.
+</p>
+
+<button
+id="onlineButton"
+class="btn primary"
+>
+Ouvrir
+</button>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- =====================================================
+     JEU
+===================================================== -->
+
+<section
+id="gameScreen"
+class="screen"
+>
+
+<div class="page-header">
+
+<h1 id="gameTitle">
+♟️ Partie
+</h1>
+
+<button
+id="quitGameButton"
+class="btn danger"
+>
+Quitter
+</button>
+
+</div>
+
+<div class="game-layout">
+
+<div>
+
+<div class="clocks">
+
+<div
+id="blackClockBox"
+class="clock"
+>
+
+<div
+id="blackName"
+class="clock-name"
+>
+Joueur B
+</div>
+
+<div
+id="blackClock"
+class="clock-time"
+>
+10:00
+</div>
+
+</div>
+
+<div
+id="whiteClockBox"
+class="clock"
+>
+
+<div
+id="whiteName"
+class="clock-name"
+>
+Joueur A
+</div>
+
+<div
+id="whiteClock"
+class="clock-time"
+>
+10:00
+</div>
+
+</div>
+
+</div>
+
+<div class="board-wrapper">
+
+<div
+id="board"
+class="board"
+></div>
+
+</div>
+
+<div
+id="thinking"
+class="thinking hidden"
+>
+🧠 L'IA réfléchit...
+</div>
+
+<br>
+
+<button
+id="newGameButton"
+class="btn primary"
+>
+Nouvelle partie
+</button>
+
+</div>
+
+<div>
+
+<div class="panel">
+
+<div
+id="status"
+class="status"
+>
+Votre premier coup commencera le chrono.
+</div>
+
+<div>
+Mode :
+<b id="modeText">Local</b>
+</div>
+
+<br>
+
+<div>
+Tour :
+<b id="turnText">Joueur A</b>
+</div>
+
+</div>
+
+<div class="panel">
+
+<h3>📜 Coups</h3>
+
+<div
+id="moves"
+class="moves"
+></div>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- =====================================================
+     ONLINE
+===================================================== -->
+
+<section
+id="onlineScreen"
+class="screen"
+>
+
+<div class="page-header">
+
+<h1>🌐 Jouer en ligne</h1>
+
+<button
+id="backChessFromOnline"
+class="btn"
+>
+← Échecs
+</button>
+
+</div>
+
+<div
+id="usernameSection"
+class="online-card"
+>
+
+<h2>Votre profil</h2>
+
+<p>
+Votre pseudo sera sauvegardé dans ce navigateur.
+</p>
+
+<div class="username-form">
+
+<input
+id="usernameInput"
+maxlength="20"
+placeholder="Votre pseudo"
+>
+
+<button
+id="saveUsernameButton"
+class="btn primary"
+>
+Continuer
+</button>
+
+</div>
+
+</div>
+
+<div
+id="onlineLobby"
+class="hidden"
+>
+
+<div class="online-layout">
+
+<div class="online-card">
+
+<h2 id="profileName">
+Profil
+</h2>
+
+<div
+id="profileScore"
+class="profile-score"
+>
+0 points
+</div>
+
+<br>
+
+<button
+id="changeUsernameButton"
+class="btn"
+>
+Changer de pseudo
+</button>
+
+</div>
+
+<div class="online-card">
+
+<h2>Joueurs en ligne</h2>
+
+<div
+id="playersList"
+class="players"
+>
+
+<p>
+Le système de matchmaking sera bientôt disponible.
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- =====================================================
+     PARAMETRES
+===================================================== -->
+
+<section
+id="settingsScreen"
+class="screen"
+>
+
+<div class="page-header">
+
+<h1>⚙️ Paramètres des échecs</h1>
+
+<button
+id="backChessFromSettings"
+class="btn"
+>
+← Échecs
+</button>
+
+</div>
+
+<div class="panel settings">
+
+<div class="setting">
+
+<div class="setting-text">
+
+<b>💾 Sauvegarde automatique</b>
+
+<span>
+Sauvegarder automatiquement les parties.
+</span>
+
+</div>
+
+<div
+id="saveSwitch"
+class="switch on"
+></div>
+
+</div>
+
+<div class="setting">
+
+<div class="setting-text">
+
+<b>🔊 Sons</b>
+
+<span>
+Jouer un son lors des coups.
+</span>
+
+</div>
+
+<div
+id="soundSwitch"
+class="switch on"
+></div>
+
+</div>
+
+<div class="setting">
+
+<div class="setting-text">
+
+<b>⏱️ Temps par joueur</b>
+
+<span>
+Temps initial du chronomètre.
+</span>
+
+</div>
+
+<select id="timeSelect">
+
+<option value="5">
+5 minutes
+</option>
+
+<option
+value="10"
+selected
+>
+10 minutes
+</option>
+
+<option value="15">
+15 minutes
+</option>
+
+<option value="30">
+30 minutes
+</option>
+
+</select>
+
+</div>
+
+</div>
+
+</section>
+
+</main>
+
+<!-- =====================================================
+     MODAL QUITTER
+===================================================== -->
+
+<div
+id="quitModal"
+class="modal hidden"
+>
+
+<div class="modal-box">
+
+<h2>Quitter la partie ?</h2>
+
+<p>
+Si vous quittez maintenant, la partie sera abandonnée.
+En mode en ligne, cela sera considéré comme un forfait.
+</p>
+
+<div class="modal-actions">
+
+<button
+id="cancelQuitButton"
+class="btn"
+>
+Continuer la partie
+</button>
+
+<button
+id="confirmQuitButton"
+class="btn danger"
+>
+Quitter la partie
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- =====================================================
+     MODAL PROMOTION
+===================================================== -->
+
+<div
+id="promotionModal"
+class="modal hidden"
+>
+
+<div class="modal-box">
+
+<h2>Promotion</h2>
+
+<p>
+Choisissez votre nouvelle pièce.
+</p>
+
+<div class="modal-actions">
+
+<button
+class="btn primary promotion-button"
+data-piece="q"
+>
+Dame
+</button>
+
+<button
+class="btn promotion-button"
+data-piece="r"
+>
+Tour
+</button>
+
+<button
+class="btn promotion-button"
+data-piece="b"
+>
+Fou
+</button>
+
+<button
+class="btn promotion-button"
+data-piece="n"
+>
+Cavalier
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- =====================================================
+     MODAL RESULTAT
+===================================================== -->
+
+<div
+id="resultModal"
+class="modal hidden"
+>
+
+<div class="modal-box">
+
+<h2 id="resultTitle">
+Partie terminée
+</h2>
+
+<p id="resultMessage"></p>
+
+<div class="modal-actions">
+
+<button
+id="closeResultButton"
+class="btn primary"
+>
+Continuer
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+/* =====================================================
+   CONFIGURATION SUPABASE
+===================================================== */
+
+const SUPABASE_URL=
+"https://ygvttaydgenzdmbsykfn.supabase.co";
+
+const SUPABASE_KEY=
+"COLLE_TA_CLE_PUBLISHABLE_SUPABASE_ICI";
+
+/*
+    La connexion Supabase sera utilisée pour :
+
+    - joueurs connectés
+    - invitations
+    - parties en ligne
+    - classement
+    - points
+*/
+
+/* =====================================================
+   NAVIGATION
+===================================================== */
+
+const screens={
+
+    home:
+        document.getElementById(
+            "homeScreen"
+        ),
+
+    chess:
+        document.getElementById(
+            "chessMenuScreen"
+        ),
+
+    game:
+        document.getElementById(
+            "gameScreen"
+        ),
+
+    online:
+        document.getElementById(
+            "onlineScreen"
+        ),
+
+    settings:
+        document.getElementById(
+            "settingsScreen"
+        )
+
+};
+
+function showScreen(
+    name
+){
+
+    Object.values(
+        screens
+    ).forEach(
+
+        screen=>
+
+            screen.classList.remove(
+                "active"
+            )
+
+    );
+
+    screens[
+        name
+    ].classList.add(
+        "active"
+    );
+
+}
+
+/* =====================================================
+   NAVIGATION
+===================================================== */
+
+homeButton.onclick=()=>{
+
+    showScreen(
+        "home"
+    );
+
+};
+
+openChessButton.onclick=()=>{
+
+    showScreen(
+        "chess"
+    );
+
+};
+
+backHomeButton.onclick=()=>{
+
+    showScreen(
+        "home"
+    );
+
+};
+
+settingsButton.onclick=()=>{
+
+    showScreen(
+        "settings"
+    );
+
+};
+
+backChessFromSettings.onclick=()=>{
+
+    showScreen(
+        "chess"
+    );
+
+};
+
+backChessFromOnline.onclick=()=>{
+
+    showScreen(
+        "chess"
+    );
+
+};
+
+/* =====================================================
+   RECHERCHE
+===================================================== */
+
+gameSearch.oninput=function(){
+
+    const search=
+        this.value
+        .toLowerCase()
+        .trim();
+
+    document
+    .querySelectorAll(
+        ".game-card"
+    )
+    .forEach(
+
+        card=>{
+
+            card.style.display=
+
+                card.dataset.search
+                .includes(
+                    search
+                )
+
+                ?
+
+                ""
+
+                :
+
+                "none";
+
+        }
+
+    );
+
+};
+
+/* =====================================================
+   PIECES
+===================================================== */
+
+const PIECES={
+
+    w:{
+
+        k:"♔",
+        q:"♕",
+        r:"♖",
+        b:"♗",
+        n:"♘",
+        p:"♙"
+
+    },
+
+    b:{
+
+        k:"♚",
+        q:"♛",
+        r:"♜",
+        b:"♝",
+        n:"♞",
+        p:"♟"
+
+    }
+
+};
+
+const VALUES={
+
+    p:100,
+    n:320,
+    b:330,
+    r:500,
+    q:900,
+    k:20000
+
+};
+
+/* =====================================================
+   ETAT
+===================================================== */
+
+let board=[];
+
+let turn="w";
+
+let selected=null;
+
+let legalMoves=[];
+
+let history=[];
+
+let lastMove=null;
+
+let gameOver=false;
+
+let aiThinking=false;
+
+let gameMode="local";
+
+let aiLevel="amateur";
+
+let promotionMove=null;
+
+let clockInterval=null;
+
+let gameStarted=false;
+
+let clocks={
+
+    w:600,
+
+    b:600
+
+};
+
+let gameStartTime=null;
+
+let settings={
+
+    save:true,
+
+    sound:true,
+
+    time:10
+
+};
+
+/* =====================================================
+   PLATEAU
+===================================================== */
+
+function initialBoard(){
+
+    return [
+
+        [
+
+            "br",
+            "bn",
+            "bb",
+            "bq",
+            "bk",
+            "bb",
+            "bn",
+            "br"
+
+        ],
+
+        [
+
+            "bp",
+            "bp",
+            "bp",
+            "bp",
+            "bp",
+            "bp",
+            "bp",
+            "bp"
+
+        ],
+
+        [
+
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+
+        ],
+
+        [
+
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+
+        ],
+
+        [
+
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+
+        ],
+
+        [
+
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+
+        ],
+
+        [
+
+            "wp",
+            "wp",
+            "wp",
+            "wp",
+            "wp",
+            "wp",
+            "wp",
+            "wp"
+
+        ],
+
+        [
+
+            "wr",
+            "wn",
+            "wb",
+            "wq",
+            "wk",
+            "wb",
+            "wn",
+            "wr"
+
+        ]
+
+    ];
+
+}
+
+function cloneBoard(
+    b
+){
+
+    return b.map(
+        row=>
+            row.slice()
+    );
+
+}
+
+function opposite(
+    color
+){
+
+    return color==="w"
+        ?"b"
+        :"w";
+
+}
+
+function inside(
+    r,
+    c
+){
+
+    return r>=0&&
+           r<8&&
+           c>=0&&
+           c<8;
+
+}
+
+/* =====================================================
+   MOUVEMENTS
+===================================================== */
+
+function pseudoMoves(
+    b,
+    color,
+    row,
+    col
+){
+
+    const piece=
+        b[row][col];
+
+    if(
+
+        !piece
+
+        ||
+
+        piece[0]!==color
+
+    ){
+
+        return [];
+
+    }
+
+    const type=
+        piece[1];
+
+    const result=[];
+
+    function add(
+        r,
+        c
+    ){
+
+        if(
+
+            !inside(
+                r,
+                c
+            )
+
+        ){
+
+            return false;
+
+        }
+
+        const target=
+            b[r][c];
+
+        if(
+
+            !target
+
+        ){
+
+            result.push({
+
+                r,
+                c
+
+            });
+
+            return true;
+
+        }
+
+        if(
+
+            target[0]!==color
+
+        ){
+
+            result.push({
+
+                r,
+                c
+
+            });
+
+        }
+
+        return false;
+
+    }
+
+    if(
+
+        type==="p"
+
+    ){
+
+        const dir=
+            color==="w"
+            ?-1
+            :1;
+
+        const start=
+            color==="w"
+            ?6
+            :1;
+
+        if(
+
+            inside(
+                row+dir,
+                col
+            )
+
+            &&
+
+            !b[
+                row+dir
+            ][
+                col
+            ]
+
+        ){
+
+            result.push({
+
+                r:
+                    row+dir,
+
+                c:
+                    col
+
+            });
+
+            if(
+
+                row===start
+
+                &&
+
+                !b[
+                    row+2*dir
+                ][
+                    col
+                ]
+
+            ){
+
+                result.push({
+
+                    r:
+                        row+2*dir,
+
+                    c:
+                        col
+
+                });
+
             }
+
+        }
+
+        for(
+
+            const dc of [-1,1]
+
+        ){
+
+            const r=
+                row+dir;
+
+            const c=
+                col+dc;
+
+            if(
+
+                inside(
+                    r,
+                    c
+                )
+
+                &&
+
+                b[r][c]
+
+                &&
+
+                b[r][c][0]!==color
+
+            ){
+
+                result.push({
+
+                    r,
+                    c
+
+                });
+
+            }
+
+        }
+
+    }
+
+    if(
+
+        type==="n"
+
+    ){
+
+        [
+
+            [-2,-1],
+            [-2,1],
+            [-1,-2],
+            [-1,2],
+            [1,-2],
+            [1,2],
+            [2,-1],
+            [2,1]
+
+        ].forEach(
+
+            ([dr,dc])=>
+
+                add(
+                    row+dr,
+                    col+dc
+                )
+
+        );
+
+    }
+
+    if(
+
+        type==="b"
+
+        ||
+
+        type==="q"
+
+    ){
+
+        [
+
+            [-1,-1],
+            [-1,1],
+            [1,-1],
+            [1,1]
+
+        ].forEach(
+
+            ([dr,dc])=>{
+
+                let r=
+                    row+dr;
+
+                let c=
+                    col+dc;
+
+                while(
+
+                    add(
+                        r,
+                        c
+                    )
+
+                ){
+
+                    r+=dr;
+
+                    c+=dc;
+
+                }
+
+            }
+
+        );
+
+    }
+
+    if(
+
+        type==="r"
+
+        ||
+
+        type==="q"
+
+    ){
+
+        [
+
+            [-1,0],
+            [1,0],
+            [0,-1],
+            [0,1]
+
+        ].forEach(
+
+            ([dr,dc])=>{
+
+                let r=
+                    row+dr;
+
+                let c=
+                    col+dc;
+
+                while(
+
+                    add(
+                        r,
+                        c
+                    )
+
+                ){
+
+                    r+=dr;
+
+                    c+=dc;
+
+                }
+
+            }
+
+        );
+
+    }
+
+    if(
+
+        type==="k"
+
+    ){
+
+        for(
+
+            let dr=-1;
+
+            dr<=1;
+
+            dr++
+
+        ){
+
+            for(
+
+                let dc=-1;
+
+                dc<=1;
+
+                dc++
+
+            ){
+
+                if(
+
+                    dr!==0
+
+                    ||
+
+                    dc!==0
+
+                ){
+
+                    add(
+
+                        row+dr,
+
+                        col+dc
+
+                    );
+
+                }
+
+            }
+
+        }
+
+    }
+
+    return result;
+
+}
+
+/* =====================================================
+   APPLICATION D'UN COUP
+===================================================== */
+
+function applyMove(
+    b,
+    from,
+    to
+){
+
+    const next=
+        cloneBoard(
+            b
+        );
+
+    next[
+        to.r
+    ][
+        to.c
+    ]=
+
+        next[
+            from.r
+        ][
+            from.c
+        ];
+
+    next[
+        from.r
+    ][
+        from.c
+    ]=
+
+        null;
+
+    return next;
+
+}
+
+/* =====================================================
+   ECHEC
+===================================================== */
+
+function findKing(
+    b,
+    color
+){
+
+    for(
+
+        let r=0;
+
+        r<8;
+
+        r++
+
+    ){
+
+        for(
+
+            let c=0;
+
+            c<8;
+
+            c++
+
+        ){
+
+            if(
+
+                b[r][c]
+                ===
+                color+"k"
+
+            ){
+
+                return {
+
+                    r,
+                    c
+
+                };
+
+            }
+
+        }
+
+    }
+
+    return null;
+
+}
+
+function isAttacked(
+    b,
+    row,
+    col,
+    attacker
+){
+
+    for(
+
+        let r=0;
+
+        r<8;
+
+        r++
+
+    ){
+
+        for(
+
+            let c=0;
+
+            c<8;
+
+            c++
+
+        ){
+
+            const piece=
+                b[r][c];
+
+            if(
+
+                piece
+
+                &&
+
+                piece[0]===attacker
+
+            ){
+
+                const moves=
+                    pseudoMoves(
+                        b,
+                        attacker,
+                        r,
+                        c
+                    );
+
+                if(
+
+                    moves.some(
+
+                        move=>
+
+                            move.r===row
+
+                            &&
+
+                            move.c===col
+
+                    )
+
+                ){
+
+                    return true;
+
+                }
+
+            }
+
+        }
+
+    }
+
+    return false;
+
+}
+
+function isCheck(
+    b,
+    color
+){
+
+    const king=
+        findKing(
+            b,
+            color
+        );
+
+    if(
+
+        !king
+
+    ){
+
+        return true;
+
+    }
+
+    return isAttacked(
+
+        b,
+        king.r,
+        king.c,
+        opposite(
+            color
+        )
+
+    );
+
+}
+
+/* =====================================================
+   COUPS LEGAUX
+===================================================== */
+
+function legalForPiece(
+    b,
+    color,
+    row,
+    col
+){
+
+    return pseudoMoves(
+        b,
+        color,
+        row,
+        col
+    )
+
+    .filter(
+
+        target=>{
+
+            const next=
+                applyMove(
+
+                    b,
+
+                    {
+                        r:row,
+                        c:col
+                    },
+
+                    target
+
+                );
+
+            return !isCheck(
+                next,
+                color
+            );
+
+        }
+
+    );
+
+}
+
+function allLegal(
+    b,
+    color
+){
+
+    const moves=[];
+
+    for(
+
+        let r=0;
+
+        r<8;
+
+        r++
+
+    ){
+
+        for(
+
+            let c=0;
+
+            c<8;
+
+            c++
+
+        ){
+
+            const piece=
+                b[r][c];
+
+            if(
+
+                piece
+
+                &&
+
+                piece[0]===color
+
+            ){
+
+                legalForPiece(
+                    b,
+                    color,
+                    r,
+                    c
+                )
+
+                .forEach(
+
+                    to=>
+
+                        moves.push({
+
+                            from:{
+
+                                r,
+                                c
+
+                            },
+
+                            to
+
+                        })
+
+                );
+
+            }
+
+        }
+
+    }
+
+    return moves;
+
+}
+
+/* =====================================================
+   IA
+===================================================== */
+
+function evaluate(
+    b
+){
+
+    let score=0;
+
+    for(
+
+        let r=0;
+
+        r<8;
+
+        r++
+
+    ){
+
+        for(
+
+            let c=0;
+
+            c<8;
+
+            c++
+
+        ){
+
+            const piece=
+                b[r][c];
+
+            if(
+
+                piece
+
+            ){
+
+                const value=
+                    VALUES[
+                        piece[1]
+                    ];
+
+                score+=
+
+                    piece[0]==="w"
+
+                    ?
+
+                    value
+
+                    :
+
+                    -value;
+
+            }
+
+        }
+
+    }
+
+    return score;
+
+}
+
+function minimax(
+    b,
+    depth,
+    alpha,
+    beta,
+    maximizing
+){
+
+    if(
+
+        depth===0
+
+    ){
+
+        return evaluate(
+            b
+        );
+
+    }
+
+    const color=
+        maximizing
+        ?"w"
+        :"b";
+
+    const moves=
+        allLegal(
+            b,
+            color
+        );
+
+    if(
+
+        !moves.length
+
+    ){
+
+        if(
+
+            isCheck(
+                b,
+                color
+            )
+
+        ){
+
+            return maximizing
+                ?-999999
+                :999999;
+
+        }
+
+        return 0;
+
+    }
+
+    if(
+
+        maximizing
+
+    ){
+
+        let best=
+            -Infinity;
+
+        for(
+
+            const move of moves
+
+        ){
+
+            const score=
+                minimax(
+
+                    applyMove(
+
+                        b,
+                        move.from,
+                        move.to
+
+                    ),
+
+                    depth-1,
+
+                    alpha,
+
+                    beta,
+
+                    false
+
+                );
+
+            best=
+                Math.max(
+                    best,
+                    score
+                );
+
+            alpha=
+                Math.max(
+                    alpha,
+                    score
+                );
+
+            if(
+
+                beta<=alpha
+
+            ){
+
+                break;
+
+            }
+
+        }
+
+        return best;
+
+    }
+
+    let best=
+        Infinity;
+
+    for(
+
+        const move of moves
+
+    ){
+
+        const score=
+            minimax(
+
+                applyMove(
+
+                    b,
+                    move.from,
+                    move.to
+
+                ),
+
+                depth-1,
+
+                alpha,
+
+                beta,
+
+                true
+
+            );
+
+        best=
+            Math.min(
+                best,
+                score
+            );
+
+        beta=
+            Math.min(
+                beta,
+                score
+            );
+
+        if(
+
+            beta<=alpha
+
+        ){
+
+            break;
+
+        }
+
+    }
+
+    return best;
+
+}
+
+function calculateAIMove(){
+
+    const moves=
+        allLegal(
+            board,
+            "b"
+        );
+
+    if(
+
+        !moves.length
+
+    ){
+
+        return null;
+
+    }
+
+    const depth=
+
+        aiLevel==="amateur"
+
+        ?
+
+        1
+
+        :
+
+        aiLevel==="semipro"
+
+        ?
+
+        2
+
+        :
+
+        3;
+
+    let bestMove=
+        moves[
+            Math.floor(
+                Math.random()
+                *
+                moves.length
+            )
+        ];
+
+    let bestScore=
+        Infinity;
+
+    for(
+
+        const move of moves
+
+    ){
+
+        const score=
+            minimax(
+
+                applyMove(
+
+                    board,
+                    move.from,
+                    move.to
+
+                ),
+
+                depth,
+
+                -Infinity,
+
+                Infinity,
+
+                true
+
+            );
+
+        if(
+
+            score<bestScore
+
+        ){
+
+            bestScore=
+                score;
+
+            bestMove=
+                move;
+
+        }
+
+    }
+
+    return bestMove;
+
+}
+
+/* =====================================================
+   IA AVEC DELAI 1.5 - 5 SECONDES
+===================================================== */
+
+function askAI(){
+
+    if(
+
+        aiThinking
+
+        ||
+
+        gameOver
+
+        ||
+
+        turn!=="b"
+
+    ){
+
+        return;
+
+    }
+
+    aiThinking=
+        true;
+
+    thinking.classList.remove(
+        "hidden"
+    );
+
+    setStatus(
+        "🧠 L'IA réfléchit..."
+    );
+
+    const delay=
+
+        Math.floor(
+
+            Math.random()
+            *
+            3501
+
+        )
+
+        +
+
+        1500;
+
+    setTimeout(
+
+        ()=>{
+
+            if(
+
+                gameOver
+
+                ||
+
+                turn!=="b"
+
+            ){
+
+                aiThinking=
+                    false;
+
+                thinking.classList.add(
+                    "hidden"
+                );
+
+                return;
+
+            }
+
+            const move=
+                calculateAIMove();
+
+            if(
+
+                move
+
+            ){
+
+                executeMove(
+
+                    move.from,
+
+                    move.to
+
+                );
+
+            }
+
+            aiThinking=
+                false;
+
+            thinking.classList.add(
+                "hidden"
+            );
+
+        },
+
+        delay
+
+    );
+
+}
+
+/* =====================================================
+   CHRONOMETRE
+===================================================== */
+
+function startClock(){
+
+    if(
+
+        clockInterval
+
+    ){
+
+        return;
+
+    }
+
+    clockInterval=
+        setInterval(
+
+            ()=>{
+
+                if(
+
+                    !gameStarted
+
+                    ||
+
+                    gameOver
+
+                ){
+
+                    return;
+
+                }
+
+                clocks[
+                    turn
+                ]--;
+
+                if(
+
+                    clocks[
+                        turn
+                    ]<=0
+
+                ){
+
+                    clocks[
+                        turn
+                    ]=0;
+
+                    gameOver=
+                        true;
+
+                    clearInterval(
+                        clockInterval
+                    );
+
+                    clockInterval=
+                        null;
+
+                    finishByTime();
+
+                }
+
+                updateClocks();
+
+            },
+
+            1000
+
+        );
+
+}
+
+function formatTime(
+    seconds
+){
+
+    return String(
+
+        Math.floor(
+            seconds/60
+        )
+
+    )
+
+    .padStart(
+        2,
+        "0"
+    )
+
+    +
+
+    ":"
+
+    +
+
+    String(
+        seconds%60
+    )
+
+    .padStart(
+        2,
+        "0"
+    );
+
+}
+
+function updateClocks(){
+
+    whiteClock.textContent=
+        formatTime(
+            clocks.w
+        );
+
+    blackClock.textContent=
+        formatTime(
+            clocks.b
+        );
+
+    whiteClockBox.classList.toggle(
+        "active",
+        turn==="w"
+    );
+
+    blackClockBox.classList.toggle(
+        "active",
+        turn==="b"
+    );
+
+}
+
+/* =====================================================
+   POINTS ONLINE
+===================================================== */
+
+const USER_KEY=
+    "gamehub_username";
+
+const POINTS_KEY=
+    "gamehub_points";
+
+function getPoints(){
+
+    return Number(
+
+        localStorage.getItem(
+            POINTS_KEY
+        )
+
+        ||
+
+        0
+
+    );
+
+}
+
+function setPoints(
+    points
+){
+
+    localStorage.setItem(
+
+        POINTS_KEY,
+
+        Math.max(
+            0,
+            points
+        )
+
+    );
+
+    updateProfile();
+
+}
+
+function addPoints(
+    amount
+){
+
+    setPoints(
+
+        getPoints()
+        +
+        amount
+
+    );
+
+}
+
+function getGameDuration(){
+
+    if(
+
+        !gameStartTime
+
+    ){
+
+        return 0;
+
+    }
+
+    return Math.floor(
+
+        (
+
+            Date.now()
+            -
+            gameStartTime
+
+        )
+
+        /
+
+        1000
+
+    );
+
+}
+
+/*
+    VICTOIRE
+
+    < 60 secondes :
+    +100
+
+    >= 60 secondes :
+    +75
+*/
+
+function rewardWin(){
+
+    const duration=
+        getGameDuration();
+
+    const points=
+        duration<60
+        ?100
+        :75;
+
+    addPoints(
+        points
+    );
+
+    return points;
+
+}
+
+/*
+    MATCH NUL
+
+    +25
+*/
+
+function rewardDraw(){
+
+    addPoints(
+        25
+    );
+
+    return 25;
+
+}
+
+/*
+    DEFAITE NORMALE
+
+    < 60 secondes :
+    -50
+
+    >= 60 secondes :
+    -35
+*/
+
+function punishLoss(){
+
+    const duration=
+        getGameDuration();
+
+    const points=
+        duration<60
+        ?-50
+        :-35;
+
+    addPoints(
+        points
+    );
+
+    return points;
+
+}
+
+/*
+    FORFAIT
+
+    Celui qui abandonne :
+    -50
+
+    Adversaire :
+    +25
+*/
+
+function forfeitPoints(){
+
+    addPoints(
+        -50
+    );
+
+    return -50;
+
+}
+
+/*
+    TEMPS ECOULE
+
+    Perdant :
+    -35
+
+    Gagnant :
+    +25
+*/
+
+function timeoutPoints(){
+
+    addPoints(
+        -35
+    );
+
+    return -35;
+
+}
+
+/* =====================================================
+   FIN DE PARTIE
+===================================================== */
+
+function showResult(
+    title,
+    message
+){
+
+    resultTitle.textContent=
+        title;
+
+    resultMessage.textContent=
+        message;
+
+    resultModal.classList.remove(
+        "hidden"
+    );
+
+}
+
+function finishByTime(){
+
+    const loser=
+        turn;
+
+    const winner=
+        opposite(
+            loser
+        );
+
+    if(
+
+        gameMode==="online"
+
+    ){
+
+        timeoutPoints();
+
+    }
+
+    const winnerName=
+        winner==="w"
+        ?"Les blancs"
+        :"Les noirs";
+
+    showResult(
+
+        "⏱️ Temps écoulé",
+
+        `${winnerName} gagnent car leur adversaire n'avait plus de temps. `+
+        `Le joueur perdant perd 35 points et le gagnant gagne 25 points en ligne.`
+
+    );
+
+    setStatus(
+        "⏱️ Temps écoulé."
+    );
+
+}
+
+function finishByCheckmate(){
+
+    const winner=
+        opposite(
+            turn
+        );
+
+    let points=0;
+
+    if(
+
+        gameMode==="online"
+
+    ){
+
+        points=
+            rewardWin();
+
+    }
+
+    const winnerName=
+        winner==="w"
+        ?"Les blancs"
+        :"Les noirs";
+
+    showResult(
+
+        "♚ Échec et mat",
+
+        `${winnerName} remportent la partie.`+
+        (
+
+            gameMode==="online"
+
+            ?
+
+            ` Vous gagnez ${points} points.`
+
+            :
+
+            ""
+
+        )
+
+    );
+
+}
+
+function finishByDraw(){
+
+    let points=0;
+
+    if(
+
+        gameMode==="online"
+
+    ){
+
+        points=
+            rewardDraw();
+
+    }
+
+    showResult(
+
+        "🤝 Match nul",
+
+        gameMode==="online"
+
+        ?
+
+        "Match nul. Vous gagnez 25 points."
+
+        :
+
+        "La partie se termine par un match nul."
+
+    );
+
+}
+
+function checkGameState(){
+
+    const moves=
+        allLegal(
+            board,
+            turn
+        );
+
+    const check=
+        isCheck(
+            board,
+            turn
+        );
+
+    if(
+
+        !moves.length
+
+    ){
+
+        gameOver=
+            true;
+
+        clearInterval(
+            clockInterval
+        );
+
+        clockInterval=
+            null;
+
+        if(
+
+            check
+
+        ){
+
+            finishByCheckmate();
+
+        }
+
+        else{
+
+            finishByDraw();
+
+        }
+
+        return;
+
+    }
+
+    if(
+
+        check
+
+    ){
+
+        setStatus(
+            "⚠️ Échec !"
+        );
+
+    }
+
+    else{
+
+        setStatus(
+
+            turn==="w"
+
+            ?
+
+            gameMode==="ai"
+
+                ?
+
+                "Votre tour."
+
+                :
+
+                "Tour du Joueur A."
+
+            :
+
+            gameMode==="ai"
+
+                ?
+
+                "Tour de l'IA."
+
+                :
+
+                "Tour du Joueur B."
+
+        );
+
+    }
+
+}
+
+/* =====================================================
+   EXECUTER COUP
+===================================================== */
+
+function executeMove(
+    from,
+    to,
+    promotion=null
+){
+
+    history.push({
+
+        board:
+            cloneBoard(
+                board
+            ),
+
+        turn,
+
+        lastMove
+
+    });
+
+    board=
+        applyMove(
+            board,
+            from,
+            to
+        );
+
+    if(
+
+        promotion
+
+    ){
+
+        board[
+            to.r
+        ][
+            to.c
+        ]=
+
+            board[
+                to.r
+            ][
+                to.c
+            ][0]
+
+            +
+
+            promotion;
+
+    }
+
+    lastMove={
+        from,
+        to
+    };
+
+    selected=
+        null;
+
+    legalMoves=
+        [];
+
+    if(
+
+        !gameStarted
+
+    ){
+
+        gameStarted=
+            true;
+
+        gameStartTime=
+            Date.now();
+
+        startClock();
+
+    }
+
+    playMoveSound();
+
+    turn=
+        opposite(
+            turn
+        );
+
+    checkGameState();
+
+    updateInterface();
+
+    if(
+
+        gameMode==="ai"
+
+        &&
+
+        turn==="b"
+
+        &&
+
+        !gameOver
+
+    ){
+
+        askAI();
+
+    }
+
+}
+
+/* =====================================================
+   CLIQUE PLATEAU
+===================================================== */
+
+function clickSquare(
+    row,
+    col
+){
+
+    if(
+
+        gameOver
+
+        ||
+
+        aiThinking
+
+    ){
+
+        return;
+
+    }
+
+    if(
+
+        gameMode==="ai"
+
+        &&
+
+        turn==="b"
+
+    ){
+
+        return;
+
+    }
+
+    if(
+
+        selected
+
+    ){
+
+        const move=
+            legalMoves.find(
+
+                target=>
+
+                    target.r===row
+
+                    &&
+
+                    target.c===col
+
+            );
+
+        if(
+
+            move
+
+        ){
+
+            const piece=
+                board[
+                    selected.r
+                ][
+                    selected.c
+                ];
+
+            if(
+
+                piece[1]==="p"
+
+                &&
+
+                (
+
+                    row===0
+
+                    ||
+
+                    row===7
+
+                )
+
+            ){
+
+                promotionMove={
+
+                    from:
+                        selected,
+
+                    to:{
+                        r:row,
+                        c:col
+                    }
+
+                };
+
+                promotionModal.classList.remove(
+                    "hidden"
+                );
+
+                return;
+
+            }
+
+            executeMove(
+
+                selected,
+
+                {
+                    r:row,
+                    c:col
+                }
+
+            );
+
+            return;
+
+        }
+
+    }
+
+    const piece=
+        board[row][col];
+
+    if(
+
+        piece
+
+        &&
+
+        piece[0]===turn
+
+    ){
+
+        selected={
+
+            r:row,
+            c:col
+
         };
 
-        let tweets = [];
+        legalMoves=
+            legalForPiece(
 
-        function showPublish() {
-            document.querySelector('.main-content').style.display = 'block';
-            document.querySelector('.explore-tweets').style.display = 'none';
-            document.querySelector('.profile-setup').style.display = 'none';
-            document.querySelector('.profile-view').style.display = 'none';
-            document.querySelector('.settings').style.display = 'none';
-        }
+                board,
+                turn,
+                row,
+                col
 
-        function showExplore() {
-            document.querySelector('.main-content').style.display = 'none';
-            document.querySelector('.explore-tweets').style.display = 'block';
-            document.querySelector('.profile-setup').style.display = 'none';
-            document.querySelector('.profile-view').style.display = 'none';
-            document.querySelector('.settings').style.display = 'none';
-            displayTweets();
-        }
+            );
 
-        function showProfile() {
-            document.querySelector('.main-content').style.display = 'none';
-            document.querySelector('.explore-tweets').style.display = 'none';
-            document.querySelector('.profile-setup').style.display = 'none';
-            document.querySelector('.profile-view').style.display = 'block';
-            document.querySelector('.settings').style.display = 'none';
-            loadProfile();
-        }
+    }
 
-        function showSettings() {
-            document.querySelector('.main-content').style.display = 'none';
-            document.querySelector('.explore-tweets').style.display = 'none';
-            document.querySelector('.profile-setup').style.display = 'none';
-            document.querySelector('.profile-view').style.display = 'none';
-            document.querySelector('.settings').style.display = 'block';
-            loadSettings();
-        }
+    else{
 
-        function postTweet() {
-            const tweetInput = document.getElementById('tweetInput').value;
-            const tweetImage = document.getElementById('tweetImage').files[0];
-            const errorMessage = document.getElementById('error-message');
-            const profileErrorMessage = document.getElementById('profile-error-message');
-            const successMessage = document.getElementById('success-message');
+        selected=
+            null;
 
-            if (tweetInput.trim() === '') {
-                errorMessage.style.display = 'block';
-                profileErrorMessage.style.display = 'none';
-                successMessage.style.display = 'none';
-                return;
+        legalMoves=
+            [];
+
+    }
+
+    renderBoard();
+
+}
+
+/* =====================================================
+   AFFICHAGE PLATEAU
+===================================================== */
+
+function renderBoard(){
+
+    boardElement.innerHTML=
+        "";
+
+    for(
+
+        let row=0;
+
+        row<8;
+
+        row++
+
+    ){
+
+        for(
+
+            let col=0;
+
+            col<8;
+
+            col++
+
+        ){
+
+            const square=
+                document.createElement(
+                    "div"
+                );
+
+            square.className=
+
+                "square "
+
+                +
+
+                (
+
+                    (row+col)%2===0
+
+                    ?
+
+                    "light"
+
+                    :
+
+                    "dark"
+
+                );
+
+            if(
+
+                selected
+
+                &&
+
+                selected.r===row
+
+                &&
+
+                selected.c===col
+
+            ){
+
+                square.classList.add(
+                    "selected"
+                );
+
             }
 
-            if (!document.getElementById('profileImage').src) {
-                profileErrorMessage.style.display = 'block';
-                errorMessage.style.display = 'none';
-                successMessage.style.display = 'none';
-                return;
+            if(
+
+                lastMove
+
+                &&
+
+                (
+
+                    (
+
+                        lastMove.from.r===row
+
+                        &&
+
+                        lastMove.from.c===col
+
+                    )
+
+                    ||
+
+                    (
+
+                        lastMove.to.r===row
+
+                        &&
+
+                        lastMove.to.c===col
+
+                    )
+
+                )
+
+            ){
+
+                square.classList.add(
+                    "last"
+                );
+
             }
 
-            errorMessage.style.display = 'none';
-            profileErrorMessage.style.display = 'none';
-            successMessage.style.display = 'block';
-            tweets.push({
-                text: tweetInput,
-                image: tweetImage ? URL.createObjectURL(tweetImage) : null
-            });
-            document.getElementById('tweetInput').value = '';
-            document.getElementById('tweetImage').value = '';
+            const legal=
+                legalMoves.some(
+
+                    move=>
+
+                        move.r===row
+
+                        &&
+
+                        move.c===col
+
+                );
+
+            if(
+
+                legal
+
+            ){
+
+                square.classList.add(
+
+                    board[row][col]
+
+                    ?
+
+                    "capture"
+
+                    :
+
+                    "legal"
+
+                );
+
+            }
+
+            const piece=
+                board[row][col];
+
+            if(
+
+                piece
+
+            ){
+
+                const element=
+                    document.createElement(
+                        "span"
+                    );
+
+                element.className=
+
+                    "piece "
+
+                    +
+
+                    (
+
+                        piece[0]==="w"
+
+                        ?
+
+                        "white"
+
+                        :
+
+                        "black"
+
+                    );
+
+                element.textContent=
+                    PIECES[
+                        piece[0]
+                    ][
+                        piece[1]
+                    ];
+
+                square.appendChild(
+                    element
+                );
+
+            }
+
+            square.onclick=
+                ()=>clickSquare(
+                    row,
+                    col
+                );
+
+            boardElement.appendChild(
+                square
+            );
+
         }
 
-        function displayTweets() {
-            const tweetList = document.getElementById('exploreTweetList');
-            tweetList.innerHTML = '';
-            tweets.forEach(tweet => {
-                const tweetElement = document.createElement('div');
-                tweetElement.classList.add('tweet');
-                tweetElement.innerHTML = `
-                    <div class="tweet-profile">
-                        <img src="https://via.placeholder.com/40" alt="Profile Image">
-                        <span>Utilisateur</span>
-                    </div>
-                    <p class="tweet-time">${new Date().toLocaleString()}</p>
-                    <p>${tweet.text}</p>
-                    ${tweet.image ? `<img src="${tweet.image}" class="tweet-image" alt="Tweet Image">` : ''}
+    }
+
+}
+
+/* =====================================================
+   INTERFACE
+===================================================== */
+
+function updateInterface(){
+
+    renderBoard();
+
+    updateClocks();
+
+    turnText.textContent=
+
+        turn==="w"
+
+        ?
+
+        gameMode==="ai"
+            ?"Vous"
+            :"Joueur A"
+
+        :
+
+        gameMode==="ai"
+            ?"IA"
+            :"Joueur B";
+
+    renderMoves();
+
+}
+
+function setStatus(
+    text
+){
+
+    status.textContent=
+        text;
+
+}
+
+function renderMoves(){
+
+    moves.innerHTML=
+        "";
+
+    history.forEach(
+
+        (
+
+            move,
+            index
+
+        )=>{
+
+            const row=
+                document.createElement(
+                    "div"
+                );
+
+            row.className=
+                "move-row";
+
+            row.innerHTML=
+
+                `
+
+                <span>${index+1}</span>
+
+                <span>Coup</span>
+
+                <span>joué</span>
+
                 `;
-                tweetList.appendChild(tweetElement);
-            });
+
+            moves.appendChild(
+                row
+            );
+
         }
 
-        function saveProfile(event) {
-            event.preventDefault();
-            const profileName = document.getElementById('profileName').value;
-            const profilePhoto = document.getElementById('profilePhoto').files[0];
-            const profileErrorMessage = document.getElementById('profile-error-message');
+    );
 
-            if (!profileName || !profilePhoto) {
-                profileErrorMessage.style.display = 'block';
+}
+
+/* =====================================================
+   DEMARRER PARTIE
+===================================================== */
+
+function startGame(
+    mode,
+    level="amateur"
+){
+
+    gameMode=
+        mode;
+
+    aiLevel=
+        level;
+
+    board=
+        initialBoard();
+
+    turn=
+        "w";
+
+    selected=
+        null;
+
+    legalMoves=
+        [];
+
+    history=
+        [];
+
+    lastMove=
+        null;
+
+    gameOver=
+        false;
+
+    aiThinking=
+        false;
+
+    gameStarted=
+        false;
+
+    gameStartTime=
+        null;
+
+    clocks.w=
+        settings.time*60;
+
+    clocks.b=
+        settings.time*60;
+
+    clearInterval(
+        clockInterval
+    );
+
+    clockInterval=
+        null;
+
+    gameTitle.textContent=
+
+        mode==="ai"
+
+        ?
+
+        "♟️ Partie contre l'IA"
+
+        :
+
+        "♟️ Partie locale";
+
+    modeText.textContent=
+
+        mode==="ai"
+
+        ?
+
+        `IA · ${level}`
+
+        :
+
+        "Joueur A contre Joueur B";
+
+    whiteName.textContent=
+
+        mode==="ai"
+        ?"Vous · Blancs"
+        :"Joueur A · Blancs";
+
+    blackName.textContent=
+
+        mode==="ai"
+        ?"IA · Noirs"
+        :"Joueur B · Noirs";
+
+    setStatus(
+
+        "Votre premier coup commencera le chrono."
+
+    );
+
+    updateInterface();
+
+    showScreen(
+        "game"
+    );
+
+}
+
+/* =====================================================
+   QUITTER AVEC MODAL
+===================================================== */
+
+quitGameButton.onclick=()=>{
+
+    if(
+
+        gameOver
+
+    ){
+
+        showScreen(
+            "chess"
+        );
+
+        return;
+
+    }
+
+    quitModal.classList.remove(
+        "hidden"
+    );
+
+};
+
+cancelQuitButton.onclick=()=>{
+
+    quitModal.classList.add(
+        "hidden"
+    );
+
+};
+
+confirmQuitButton.onclick=()=>{
+
+    quitModal.classList.add(
+        "hidden"
+    );
+
+    if(
+
+        gameMode==="online"
+
+    ){
+
+        const points=
+            forfeitPoints();
+
+        showResult(
+
+            "🚩 Forfait",
+
+            `Vous avez abandonné la partie. Vous perdez 50 points. `+
+            `Votre adversaire gagne 25 points.`
+
+        );
+
+    }
+
+    clearInterval(
+        clockInterval
+    );
+
+    clockInterval=
+        null;
+
+    gameOver=
+        true;
+
+    showScreen(
+        "chess"
+    );
+
+};
+
+/* =====================================================
+   PROMOTION
+===================================================== */
+
+document
+.querySelectorAll(
+    ".promotion-button"
+)
+.forEach(
+
+    button=>{
+
+        button.onclick=()=>{
+
+            if(
+
+                !promotionMove
+
+            ){
+
                 return;
+
             }
 
-            profileErrorMessage.style.display = 'none';
-            document.getElementById('profileNameDisplay').textContent = profileName;
-            const profileImage = document.getElementById('profileImage');
-            profileImage.src = URL.createObjectURL(profilePhoto);
-            showProfile();
-        }
+            executeMove(
 
-        function editProfile() {
-            showProfile();
-        }
+                promotionMove.from,
 
-        function saveSettings(event) {
-            event.preventDefault();
-            const languageSelect = document.getElementById('languageSelect').value;
-            localStorage.setItem('language', languageSelect);
-            updateLanguage();
-        }
+                promotionMove.to,
 
-        function loadProfile() {
-            const profileNameDisplay = document.getElementById('profileNameDisplay');
-            const profileImage = document.getElementById('profileImage');
-            profileNameDisplay.textContent = 'Nom d\'Utilisateur';
-            profileImage.src = 'https://via.placeholder.com/120';
-        }
+                button.dataset.piece
 
-        function loadSettings() {
-            const languageSelect = document.getElementById('languageSelect');
-            languageSelect.value = localStorage.getItem('language') || 'auto';
-        }
+            );
 
-        function updateLanguage() {
-            const lang = localStorage.getItem('language') || 'fr';
-            document.title = translations[lang].title;
-            document.querySelectorAll('.header .menu a')[0].textContent = translations[lang].publish;
-            document.querySelectorAll('.header .menu a')[1].textContent = translations[lang].explore;
-            document.querySelectorAll('.header .menu a')[2].textContent = translations[lang].settings;
-            document.querySelectorAll('.header .menu a')[3].textContent = translations[lang].profile;
-            document.querySelector('.profile-setup h2').textContent = translations[lang].setupProfile;
-            document.querySelector('.profile-setup button').textContent = translations[lang].saveProfile;
-            document.querySelector('.profile-view h2').textContent = translations[lang].yourProfile;
-            document.querySelector('.profile-view button').textContent = translations[lang].editProfile;
-            document.querySelector('.profile-view button.logout-button').textContent = translations[lang].logout;
-            document.querySelector('.explore-tweets h2').textContent = translations[lang].exploreTweets;
-            document.getElementById('tweetInput').placeholder = translations[lang].tweetPlaceholder;
-            document.getElementById('error-message').textContent = translations[lang].tweetError;
-            document.getElementById('profile-error-message').textContent = translations[lang].profileError;
-            document.querySelector('.settings h2').textContent = translations[lang].settingsTitle;
-            document.querySelector('.settings button').textContent = translations[lang].saveSettings;
-            document.querySelector('.settings label').textContent = translations[lang].language;
-            document.querySelector('.settings select option[value="auto"]').textContent = translations[lang].default;
-        }
+            promotionMove=
+                null;
 
-        function logout() {
-            alert('Déconnexion réussie');
-        }
+            promotionModal.classList.add(
+                "hidden"
+            );
 
-        document.addEventListener('DOMContentLoaded', () => {
-            updateLanguage();
-            showPublish(); // Afficher la section Publier par défaut
-        });
-    </script>
+        };
+
+    }
+
+);
+
+/* =====================================================
+   RESULTAT
+===================================================== */
+
+closeResultButton.onclick=()=>{
+
+    resultModal.classList.add(
+        "hidden"
+    );
+
+};
+
+/* =====================================================
+   SONS
+===================================================== */
+
+function playMoveSound(){
+
+    if(
+
+        !settings.sound
+
+    ){
+
+        return;
+
+    }
+
+    try{
+
+        const audio=
+            new AudioContext();
+
+        const oscillator=
+            audio.createOscillator();
+
+        const gain=
+            audio.createGain();
+
+        oscillator.frequency.value=
+            420;
+
+        gain.gain.value=
+            .035;
+
+        oscillator.connect(
+            gain
+        );
+
+        gain.connect(
+            audio.destination
+        );
+
+        oscillator.start();
+
+        oscillator.stop(
+
+            audio.currentTime
+            +
+            .08
+
+        );
+
+    }
+
+    catch(
+
+        error
+
+    ){
+
+    }
+
+}
+
+/* =====================================================
+   MODES
+===================================================== */
+
+document
+.querySelectorAll(
+    ".ai-button"
+)
+.forEach(
+
+    button=>{
+
+        button.onclick=()=>{
+
+            startGame(
+
+                "ai",
+
+                button.dataset.level
+
+            );
+
+        };
+
+    }
+
+);
+
+localButton.onclick=()=>{
+
+    startGame(
+        "local"
+    );
+
+};
+
+newGameButton.onclick=()=>{
+
+    startGame(
+
+        gameMode,
+
+        aiLevel
+
+    );
+
+};
+
+/* =====================================================
+   PARAMETRES
+===================================================== */
+
+saveSwitch.onclick=function(){
+
+    settings.save=
+        !settings.save;
+
+    this.classList.toggle(
+        "on",
+        settings.save
+    );
+
+};
+
+soundSwitch.onclick=function(){
+
+    settings.sound=
+        !settings.sound;
+
+    this.classList.toggle(
+        "on",
+        settings.sound
+    );
+
+};
+
+timeSelect.onchange=function(){
+
+    settings.time=
+        Number(
+            this.value
+        );
+
+};
+
+/* =====================================================
+   PROFIL ONLINE
+===================================================== */
+
+function updateProfile(){
+
+    const username=
+        localStorage.getItem(
+            USER_KEY
+        );
+
+    const points=
+        getPoints();
+
+    if(
+
+        username
+
+    ){
+
+        profileName.textContent=
+            `👤 ${username}`;
+
+        profileScore.textContent=
+            `${points} points`;
+
+    }
+
+}
+
+function openOnline(){
+
+    const username=
+        localStorage.getItem(
+            USER_KEY
+        );
+
+    if(
+
+        username
+
+    ){
+
+        usernameSection.classList.add(
+            "hidden"
+        );
+
+        onlineLobby.classList.remove(
+            "hidden"
+        );
+
+        updateProfile();
+
+    }
+
+    else{
+
+        usernameSection.classList.remove(
+            "hidden"
+        );
+
+        onlineLobby.classList.add(
+            "hidden"
+        );
+
+    }
+
+}
+
+onlineButton.onclick=()=>{
+
+    showScreen(
+        "online"
+    );
+
+    openOnline();
+
+};
+
+saveUsernameButton.onclick=()=>{
+
+    const username=
+        usernameInput.value
+        .trim();
+
+    if(
+
+        username.length<3
+
+    ){
+
+        alert(
+            "Le pseudo doit contenir au moins 3 caractères."
+        );
+
+        return;
+
+    }
+
+    localStorage.setItem(
+        USER_KEY,
+        username
+    );
+
+    if(
+
+        localStorage.getItem(
+            POINTS_KEY
+        )===null
+
+    ){
+
+        localStorage.setItem(
+            POINTS_KEY,
+            "0"
+        );
+
+    }
+
+    openOnline();
+
+};
+
+changeUsernameButton.onclick=()=>{
+
+    usernameSection.classList.remove(
+        "hidden"
+    );
+
+    onlineLobby.classList.add(
+        "hidden"
+    );
+
+    usernameInput.value=
+        localStorage.getItem(
+            USER_KEY
+        )
+
+        ||
+
+        "";
+
+};
+
+/* =====================================================
+   INITIALISATION
+===================================================== */
+
+const boardElement=
+    document.getElementById(
+        "board"
+    );
+
+const whiteClock=
+    document.getElementById(
+        "whiteClock"
+    );
+
+const blackClock=
+    document.getElementById(
+        "blackClock"
+    );
+
+const whiteClockBox=
+    document.getElementById(
+        "whiteClockBox"
+    );
+
+const blackClockBox=
+    document.getElementById(
+        "blackClockBox"
+    );
+
+const thinking=
+    document.getElementById(
+        "thinking"
+    );
+
+const status=
+    document.getElementById(
+        "status"
+    );
+
+const turnText=
+    document.getElementById(
+        "turnText"
+    );
+
+const moves=
+    document.getElementById(
+        "moves"
+    );
+
+const gameTitle=
+    document.getElementById(
+        "gameTitle"
+    );
+
+const modeText=
+    document.getElementById(
+        "modeText"
+    );
+
+const whiteName=
+    document.getElementById(
+        "whiteName"
+    );
+
+const blackName=
+    document.getElementById(
+        "blackName"
+    );
+
+const quitModal=
+    document.getElementById(
+        "quitModal"
+    );
+
+const promotionModal=
+    document.getElementById(
+        "promotionModal"
+    );
+
+const resultModal=
+    document.getElementById(
+        "resultModal"
+    );
+
+const resultTitle=
+    document.getElementById(
+        "resultTitle"
+    );
+
+const resultMessage=
+    document.getElementById(
+        "resultMessage"
+    );
+
+const profileName=
+    document.getElementById(
+        "profileName"
+    );
+
+const profileScore=
+    document.getElementById(
+        "profileScore"
+    );
+
+const usernameSection=
+    document.getElementById(
+        "usernameSection"
+    );
+
+const onlineLobby=
+    document.getElementById(
+        "onlineLobby"
+    );
+
+const usernameInput=
+    document.getElementById(
+        "usernameInput"
+    );
+
+showScreen(
+    "home"
+);
+
+</script>
+
 </body>
+
 </html>
