@@ -1431,7 +1431,7 @@ Commencer
 <h2>🌐 Jouer en ligne</h2>
 
 <p>
-Affrontez d'autres joueurs en temps réel. Classement Elo.
+Affrontez bientôt d'autres joueurs connectés.
 </p>
 
 <button
@@ -1659,7 +1659,7 @@ Profil
 id="profileScore"
 class="profile-score"
 >
-1200 Elo
+0 points
 </div>
 
 <br>
@@ -1675,42 +1675,7 @@ Changer de pseudo
 
 <div class="online-card">
 
-<h2>Partie en ligne</h2>
-
-<p>
-Trouvez un adversaire et jouez une partie classée en temps réel.
-</p>
-
-<button
-id="searchMatchButton"
-class="btn primary"
->
-🔍 Chercher une partie
-</button>
-
-<div
-id="searchingBox"
-class="hidden"
->
-
-<p>
-⏳ Recherche d'un adversaire...
-</p>
-
-<button
-id="cancelSearchButton"
-class="btn danger"
->
-Annuler
-</button>
-
-</div>
-
-</div>
-
-<div class="online-card">
-
-<h2>🏆 Classement</h2>
+<h2>Joueurs en ligne</h2>
 
 <div
 id="playersList"
@@ -1718,7 +1683,7 @@ class="players"
 >
 
 <p>
-Chargement du classement...
+Le système de matchmaking sera bientôt disponible.
 </p>
 
 </div>
@@ -1961,8 +1926,6 @@ Continuer
 
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-
 <script>
 
 /* =====================================================
@@ -1973,60 +1936,17 @@ const SUPABASE_URL=
 "https://ygvttaydgenzdmbsykfn.supabase.co";
 
 const SUPABASE_KEY=
-"sb_publishable_AzhjMaP1tzKYdyz01Tcmig_cUk44aNL";
+"COLLE_TA_CLE_PUBLISHABLE_SUPABASE_ICI";
 
 /*
-    La connexion Supabase est utilisée pour :
+    La connexion Supabase sera utilisée pour :
 
-    - profils joueurs (pseudo + Elo)
-    - matchmaking (file d'attente)
-    - parties en ligne synchronisées en temps réel
-    - classement général
+    - joueurs connectés
+    - invitations
+    - parties en ligne
+    - classement
+    - points
 */
-
-const sb=
-    window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_KEY
-    );
-
-/* =====================================================
-   IDENTITE JOUEUR (sans compte / mot de passe)
-===================================================== */
-
-const CLIENT_ID_KEY=
-    "gamehub_client_id";
-
-function getClientId(){
-
-    let id=
-        localStorage.getItem(
-            CLIENT_ID_KEY
-        );
-
-    if(
-        !id
-    ){
-
-        id=
-            crypto.randomUUID();
-
-        localStorage.setItem(
-            CLIENT_ID_KEY,
-            id
-        );
-
-    }
-
-    return id;
-
-}
-
-const clientId=
-    getClientId();
-
-let myProfile=
-    null;
 
 /* =====================================================
    NAVIGATION
@@ -3713,856 +3633,203 @@ function updateClocks(){
 }
 
 /* =====================================================
-   ELO / SUPABASE ONLINE
+   POINTS ONLINE
 ===================================================== */
 
 const USER_KEY=
     "gamehub_username";
 
-let matchmakingActive=
-    false;
+const POINTS_KEY=
+    "gamehub_points";
 
-let waitingChannel=
-    null;
+function getPoints(){
 
-let gameChannel=
-    null;
+    return Number(
 
-let onlineGameId=
-    null;
-
-let myColor=
-    null;
-
-let opponentUsername=
-    "";
-
-let pendingOnlineResult=
-    null;
-
-/*
-    PROFIL (pseudo + Elo, stockés dans Supabase)
-*/
-
-async function loadOrCreateProfile(
-    username
-){
-
-    const {data,error}=
-
-        await sb
-        .from("profiles")
-        .select("*")
-        .eq("id",clientId)
-        .maybeSingle();
-
-    if(
-
-        data
-
-    ){
-
-        myProfile=
-            data;
-
-        if(
-
-            data.username!==username
-
-        ){
-
-            await sb
-            .from("profiles")
-            .update({username})
-            .eq("id",clientId);
-
-            myProfile.username=
-                username;
-
-        }
-
-    }
-
-    else{
-
-        const {data:created}=
-
-            await sb
-            .from("profiles")
-            .insert({
-
-                id:clientId,
-                username,
-                elo:1200
-
-            })
-            .select()
-            .single();
-
-        if(
-
-            created
-
-        ){
-
-            myProfile=
-                created;
-
-        }
-
-    }
-
-}
-
-async function refreshMyProfile(){
-
-    try{
-
-        const {data,error}=
-
-            await sb
-            .from("profiles")
-            .select("*")
-            .eq("id",clientId)
-            .single();
-
-        if(
-
-            !error
-
-            &&
-
-            data
-
-        ){
-
-            myProfile=
-                data;
-
-            updateProfile();
-
-        }
-
-    }
-
-    catch(
-
-        error
-
-    ){
-
-    }
-
-}
-
-/*
-    CLASSEMENT
-*/
-
-async function loadLeaderboard(){
-
-    playersList.innerHTML=
-
-        "<p>Chargement du classement...</p>";
-
-    const {data,error}=
-
-        await sb
-        .from("profiles")
-        .select("username,elo")
-        .order("elo",{ascending:false})
-        .limit(20);
-
-    if(
-
-        error
+        localStorage.getItem(
+            POINTS_KEY
+        )
 
         ||
 
-        !data
+        0
 
-        ||
-
-        !data.length
-
-    ){
-
-        playersList.innerHTML=
-
-            "<p>Aucun joueur classé pour le moment.</p>";
-
-        return;
-
-    }
-
-    playersList.innerHTML=
-
-        data.map(
-
-            (player,index)=>
-
-                `<div class="player">`+
-
-                `<span>#${index+1} ${player.username}</span>`+
-
-                `<span>${player.elo} Elo</span>`+
-
-                `</div>`
-
-        ).join("");
+    );
 
 }
 
-/*
-    MATCHMAKING
-*/
-
-async function startMatchmaking(){
-
-    if(
-
-        !myProfile
-
-    ){
-
-        return;
-
-    }
-
-    matchmakingActive=
-        true;
-
-    searchMatchButton.classList.add(
-        "hidden"
-    );
-
-    searchingBox.classList.remove(
-        "hidden"
-    );
-
-    try{
-
-        const {data,error}=
-
-            await sb.rpc(
-                "find_match",
-                {
-
-                    p_player_id:clientId,
-                    p_username:myProfile.username,
-                    p_elo:myProfile.elo,
-                    p_board:initialBoard()
-
-                }
-            );
-
-        if(
-
-            error
-
-        ){
-
-            alert(
-                "Erreur de matchmaking, réessayez."
-            );
-
-            cancelSearch();
-
-            return;
-
-        }
-
-        if(
-
-            data
-
-        ){
-
-            const {data:game}=
-
-                await sb
-                .from("games")
-                .select("*")
-                .eq("id",data)
-                .single();
-
-            if(
-
-                game
-
-            ){
-
-                loadOnlineGame(
-                    game
-                );
-
-            }
-
-        }
-
-        else{
-
-            subscribeWaitingForGame();
-
-        }
-
-    }
-
-    catch(
-
-        error
-
-    ){
-
-        cancelSearch();
-
-    }
-
-}
-
-async function cancelSearch(){
-
-    matchmakingActive=
-        false;
-
-    searchMatchButton.classList.remove(
-        "hidden"
-    );
-
-    searchingBox.classList.add(
-        "hidden"
-    );
-
-    if(
-
-        waitingChannel
-
-    ){
-
-        sb.removeChannel(
-            waitingChannel
-        );
-
-        waitingChannel=
-            null;
-
-    }
-
-    try{
-
-        await sb
-        .from("queue")
-        .delete()
-        .eq("player_id",clientId);
-
-    }
-
-    catch(
-
-        error
-
-    ){
-
-    }
-
-}
-
-function subscribeWaitingForGame(){
-
-    if(
-
-        waitingChannel
-
-    ){
-
-        sb.removeChannel(
-            waitingChannel
-        );
-
-    }
-
-    waitingChannel=
-
-        sb.channel("waiting-"+clientId)
-
-        .on(
-
-            "postgres_changes",
-
-            {
-
-                event:"INSERT",
-                schema:"public",
-                table:"games",
-                filter:`white_id=eq.${clientId}`
-
-            },
-
-            payload=>
-
-                onMatched(
-                    payload.new
-                )
-
-        )
-
-        .on(
-
-            "postgres_changes",
-
-            {
-
-                event:"INSERT",
-                schema:"public",
-                table:"games",
-                filter:`black_id=eq.${clientId}`
-
-            },
-
-            payload=>
-
-                onMatched(
-                    payload.new
-                )
-
-        )
-
-        .subscribe();
-
-}
-
-function onMatched(
-    gameRow
+function setPoints(
+    points
 ){
 
+    localStorage.setItem(
+
+        POINTS_KEY,
+
+        Math.max(
+            0,
+            points
+        )
+
+    );
+
+    updateProfile();
+
+}
+
+function addPoints(
+    amount
+){
+
+    setPoints(
+
+        getPoints()
+        +
+        amount
+
+    );
+
+}
+
+function getGameDuration(){
+
     if(
 
-        !matchmakingActive
+        !gameStartTime
 
     ){
 
-        return;
+        return 0;
 
     }
 
-    matchmakingActive=
-        false;
+    return Math.floor(
 
-    if(
+        (
 
-        waitingChannel
+            Date.now()
+            -
+            gameStartTime
 
-    ){
+        )
 
-        sb.removeChannel(
-            waitingChannel
-        );
+        /
 
-        waitingChannel=
-            null;
+        1000
 
-    }
-
-    loadOnlineGame(
-        gameRow
     );
 
 }
 
 /*
-    CHARGER UNE PARTIE EN LIGNE
+    VICTOIRE
+
+    < 60 secondes :
+    +100
+
+    >= 60 secondes :
+    +75
 */
 
-function loadOnlineGame(
-    gameRow
-){
+function rewardWin(){
 
-    searchMatchButton.classList.remove(
-        "hidden"
+    const duration=
+        getGameDuration();
+
+    const points=
+        duration<60
+        ?100
+        :75;
+
+    addPoints(
+        points
     );
 
-    searchingBox.classList.add(
-        "hidden"
-    );
-
-    onlineGameId=
-        gameRow.id;
-
-    myColor=
-
-        gameRow.white_id===clientId
-        ?"w"
-        :"b";
-
-    opponentUsername=
-
-        myColor==="w"
-        ?gameRow.black_username
-        :gameRow.white_username;
-
-    board=
-        gameRow.board;
-
-    turn=
-        gameRow.turn;
-
-    history=
-        [];
-
-    lastMove=
-        null;
-
-    selected=
-        null;
-
-    legalMoves=
-        [];
-
-    gameOver=
-        false;
-
-    gameMode=
-        "online";
-
-    gameStarted=
-        true;
-
-    gameStartTime=
-        Date.now();
-
-    clocks={
-
-        w:gameRow.white_time,
-        b:gameRow.black_time
-
-    };
-
-    clearInterval(
-        clockInterval
-    );
-
-    clockInterval=
-        null;
-
-    startClock();
-
-    gameTitle.textContent=
-        "🌐 Partie en ligne";
-
-    modeText.textContent=
-        "Classée · Elo";
-
-    whiteName.textContent=
-
-        myColor==="w"
-        ?`${myProfile.username} · Blancs`
-        :`${opponentUsername} · Blancs`;
-
-    blackName.textContent=
-
-        myColor==="b"
-        ?`${myProfile.username} · Noirs`
-        :`${opponentUsername} · Noirs`;
-
-    setStatus(
-
-        myColor==="w"
-        ?"À vous de jouer."
-        :`En attente de ${opponentUsername}...`
-
-    );
-
-    subscribeGameUpdates(
-        onlineGameId
-    );
-
-    updateInterface();
-
-    showScreen(
-        "game"
-    );
+    return points;
 
 }
 
-function subscribeGameUpdates(
-    gameId
-){
+/*
+    MATCH NUL
 
-    if(
+    +25
+*/
 
-        gameChannel
+function rewardDraw(){
 
-    ){
+    addPoints(
+        25
+    );
 
-        sb.removeChannel(
-            gameChannel
-        );
-
-    }
-
-    gameChannel=
-
-        sb.channel("game-"+gameId)
-
-        .on(
-
-            "postgres_changes",
-
-            {
-
-                event:"UPDATE",
-                schema:"public",
-                table:"games",
-                filter:`id=eq.${gameId}`
-
-            },
-
-            payload=>
-
-                applyRemoteGameUpdate(
-                    payload.new
-                )
-
-        )
-
-        .subscribe();
+    return 25;
 
 }
 
-function applyRemoteGameUpdate(
-    row
-){
+/*
+    DEFAITE NORMALE
 
-    if(
+    < 60 secondes :
+    -50
 
-        !onlineGameId
+    >= 60 secondes :
+    -35
+*/
 
-        ||
+function punishLoss(){
 
-        row.id!==onlineGameId
+    const duration=
+        getGameDuration();
 
-    ){
+    const points=
+        duration<60
+        ?-50
+        :-35;
 
-        return;
+    addPoints(
+        points
+    );
 
-    }
-
-    const boardChanged=
-
-        JSON.stringify(row.board)
-        !==
-        JSON.stringify(board);
-
-    if(
-
-        boardChanged
-
-    ){
-
-        history.push({});
-
-        board=
-            row.board;
-
-        if(
-
-            row.turn===myColor
-
-        ){
-
-            playMoveSound();
-
-        }
-
-    }
-
-    turn=
-        row.turn;
-
-    clocks={
-
-        w:row.white_time,
-        b:row.black_time
-
-    };
-
-    selected=
-        null;
-
-    legalMoves=
-        [];
-
-    if(
-
-        boardChanged
-
-        &&
-
-        !gameOver
-
-    ){
-
-        checkGameState();
-
-    }
-
-    if(
-
-        row.status==="finished"
-
-        &&
-
-        !gameOver
-
-    ){
-
-        gameOver=
-            true;
-
-        clearInterval(
-            clockInterval
-        );
-
-        clockInterval=
-            null;
-
-        refreshMyProfile();
-
-        if(
-
-            row.end_reason==="forfeit"
-
-            ||
-
-            row.end_reason==="timeout"
-
-        ){
-
-            const iWon=
-
-                (row.result==="white" && myColor==="w")
-
-                ||
-
-                (row.result==="black" && myColor==="b");
-
-            const title=
-
-                row.end_reason==="forfeit"
-                ?"🚩 Abandon"
-                :"⏱️ Temps écoulé";
-
-            const message=
-
-                (
-                    row.end_reason==="forfeit"
-                    ?(iWon?"Votre adversaire a abandonné la partie.":"Vous avez abandonné la partie.")
-                    :(iWon?"Votre adversaire n'avait plus de temps.":"Vous n'aviez plus de temps.")
-                )
-
-                +" Votre classement Elo a été mis à jour.";
-
-            showResult(
-                title,
-                message
-            );
-
-        }
-
-    }
-
-    else if(
-
-        row.status==="finished"
-
-    ){
-
-        refreshMyProfile();
-
-    }
-
-    updateInterface();
+    return points;
 
 }
 
-async function finishOnlineGame(
-    result,
-    reason
-){
+/*
+    FORFAIT
 
-    if(
+    Celui qui abandonne :
+    -50
 
-        !onlineGameId
+    Adversaire :
+    +25
+*/
 
-    ){
+function forfeitPoints(){
 
-        return;
+    addPoints(
+        -50
+    );
 
-    }
-
-    try{
-
-        await sb.rpc(
-            "finish_game",
-            {
-
-                p_game_id:onlineGameId,
-                p_result:result,
-                p_end_reason:reason
-
-            }
-        );
-
-    }
-
-    catch(
-
-        error
-
-    ){
-
-    }
-
-    await refreshMyProfile();
+    return -50;
 
 }
 
-async function pushOnlineMove(){
+/*
+    TEMPS ECOULE
 
-    if(
+    Perdant :
+    -35
 
-        !onlineGameId
+    Gagnant :
+    +25
+*/
 
-    ){
+function timeoutPoints(){
 
-        return;
+    addPoints(
+        -35
+    );
 
-    }
-
-    try{
-
-        await sb
-        .from("games")
-        .update({
-
-            board,
-            turn,
-            white_time:clocks.w,
-            black_time:clocks.b,
-            updated_at:new Date().toISOString()
-
-        })
-        .eq("id",onlineGameId);
-
-    }
-
-    catch(
-
-        error
-
-    ){
-
-    }
+    return -35;
 
 }
 
@@ -4603,15 +3870,7 @@ function finishByTime(){
 
     ){
 
-        finishOnlineGame(
-
-            winner==="w"
-            ?"white"
-            :"black",
-
-            "timeout"
-
-        );
+        timeoutPoints();
 
     }
 
@@ -4624,14 +3883,8 @@ function finishByTime(){
 
         "⏱️ Temps écoulé",
 
-        `${winnerName} gagnent car leur adversaire n'avait plus de temps.`+
-        (
-
-            gameMode==="online"
-            ?" Votre classement Elo va être mis à jour."
-            :""
-
-        )
+        `${winnerName} gagnent car leur adversaire n'avait plus de temps. `+
+        `Le joueur perdant perd 35 points et le gagnant gagne 25 points en ligne.`
 
     );
 
@@ -4648,23 +3901,16 @@ function finishByCheckmate(){
             turn
         );
 
+    let points=0;
+
     if(
 
         gameMode==="online"
 
     ){
 
-        pendingOnlineResult={
-
-            result:
-
-                winner==="w"
-                ?"white"
-                :"black",
-
-            reason:"checkmate"
-
-        };
+        points=
+            rewardWin();
 
     }
 
@@ -4684,7 +3930,7 @@ function finishByCheckmate(){
 
             ?
 
-            " Votre classement Elo va être mis à jour."
+            ` Vous gagnez ${points} points.`
 
             :
 
@@ -4698,18 +3944,16 @@ function finishByCheckmate(){
 
 function finishByDraw(){
 
+    let points=0;
+
     if(
 
         gameMode==="online"
 
     ){
 
-        pendingOnlineResult={
-
-            result:"draw",
-            reason:"pat"
-
-        };
+        points=
+            rewardDraw();
 
     }
 
@@ -4721,7 +3965,7 @@ function finishByDraw(){
 
         ?
 
-        "Match nul. Votre classement Elo va être mis à jour."
+        "Match nul. Vous gagnez 25 points."
 
         :
 
@@ -4923,45 +4167,6 @@ function executeMove(
 
     if(
 
-        gameMode==="online"
-
-        &&
-
-        onlineGameId
-
-    ){
-
-        pushOnlineMove().then(
-
-            ()=>{
-
-                if(
-
-                    pendingOnlineResult
-
-                ){
-
-                    const pending=
-                        pendingOnlineResult;
-
-                    pendingOnlineResult=
-                        null;
-
-                    finishOnlineGame(
-                        pending.result,
-                        pending.reason
-                    );
-
-                }
-
-            }
-
-        );
-
-    }
-
-    if(
-
         gameMode==="ai"
 
         &&
@@ -5010,20 +4215,6 @@ function clickSquare(
         &&
 
         turn==="b"
-
-    ){
-
-        return;
-
-    }
-
-    if(
-
-        gameMode==="online"
-
-        &&
-
-        turn!==myColor
 
     ){
 
@@ -5611,50 +4802,19 @@ confirmQuitButton.onclick=()=>{
 
         gameMode==="online"
 
-        &&
-
-        onlineGameId
-
     ){
 
-        const winner=
-            opposite(myColor);
-
-        finishOnlineGame(
-
-            winner==="w"
-            ?"white"
-            :"black",
-
-            "forfeit"
-
-        );
+        const points=
+            forfeitPoints();
 
         showResult(
 
             "🚩 Forfait",
 
-            "Vous avez abandonné la partie. Votre classement Elo va être mis à jour."
+            `Vous avez abandonné la partie. Vous perdez 50 points. `+
+            `Votre adversaire gagne 25 points.`
 
         );
-
-        if(
-
-            gameChannel
-
-        ){
-
-            sb.removeChannel(
-                gameChannel
-            );
-
-            gameChannel=
-                null;
-
-        }
-
-        onlineGameId=
-            null;
 
     }
 
@@ -5834,54 +4994,6 @@ localButton.onclick=()=>{
 
 newGameButton.onclick=()=>{
 
-    if(
-
-        gameMode==="online"
-
-    ){
-
-        if(
-
-            !gameOver
-
-        ){
-
-            quitModal.classList.remove(
-                "hidden"
-            );
-
-            return;
-
-        }
-
-        if(
-
-            gameChannel
-
-        ){
-
-            sb.removeChannel(
-                gameChannel
-            );
-
-            gameChannel=
-                null;
-
-        }
-
-        onlineGameId=
-            null;
-
-        showScreen(
-            "online"
-        );
-
-        openOnline();
-
-        return;
-
-    }
-
     startGame(
 
         gameMode,
@@ -5935,25 +5047,31 @@ timeSelect.onchange=function(){
 
 function updateProfile(){
 
+    const username=
+        localStorage.getItem(
+            USER_KEY
+        );
+
+    const points=
+        getPoints();
+
     if(
 
-        !myProfile
+        username
 
     ){
 
-        return;
+        profileName.textContent=
+            `👤 ${username}`;
+
+        profileScore.textContent=
+            `${points} points`;
 
     }
 
-    profileName.textContent=
-        `👤 ${myProfile.username}`;
-
-    profileScore.textContent=
-        `${myProfile.elo} Elo`;
-
 }
 
-async function openOnline(){
+function openOnline(){
 
     const username=
         localStorage.getItem(
@@ -5974,13 +5092,7 @@ async function openOnline(){
             "hidden"
         );
 
-        await loadOrCreateProfile(
-            username
-        );
-
         updateProfile();
-
-        loadLeaderboard();
 
     }
 
@@ -6008,19 +5120,7 @@ onlineButton.onclick=()=>{
 
 };
 
-searchMatchButton.onclick=()=>{
-
-    startMatchmaking();
-
-};
-
-cancelSearchButton.onclick=()=>{
-
-    cancelSearch();
-
-};
-
-saveUsernameButton.onclick=async ()=>{
+saveUsernameButton.onclick=()=>{
 
     const username=
         usernameInput.value
@@ -6040,38 +5140,27 @@ saveUsernameButton.onclick=async ()=>{
 
     }
 
-    const {data:existing}=
-
-        await sb
-        .from("profiles")
-        .select("id")
-        .eq("username",username)
-        .maybeSingle();
-
-    if(
-
-        existing
-
-        &&
-
-        existing.id!==clientId
-
-    ){
-
-        alert(
-            "Ce pseudo est déjà pris, choisissez-en un autre."
-        );
-
-        return;
-
-    }
-
     localStorage.setItem(
         USER_KEY,
         username
     );
 
-    await openOnline();
+    if(
+
+        localStorage.getItem(
+            POINTS_KEY
+        )===null
+
+    ){
+
+        localStorage.setItem(
+            POINTS_KEY,
+            "0"
+        );
+
+    }
+
+    openOnline();
 
 };
 
@@ -6213,26 +5302,6 @@ const onlineLobby=
 const usernameInput=
     document.getElementById(
         "usernameInput"
-    );
-
-const searchMatchButton=
-    document.getElementById(
-        "searchMatchButton"
-    );
-
-const searchingBox=
-    document.getElementById(
-        "searchingBox"
-    );
-
-const cancelSearchButton=
-    document.getElementById(
-        "cancelSearchButton"
-    );
-
-const playersList=
-    document.getElementById(
-        "playersList"
     );
 
 showScreen(
