@@ -21,19 +21,19 @@
             </div>
         </div>
         <div class="nav-right">
-            <button id="publishBtn" class="btn btn-primary">Publier un Jeu</button>
-            <button id="settingsBtn" class="btn btn-secondary">Paramètres</button>
+            <button id="publishBtn" class="btn btn-primary" type="button">Publier un Jeu</button>
+            <button id="settingsBtn" class="btn btn-secondary" type="button">Paramètres</button>
         </div>
     </header>
 
     <!-- Barre de Filtres par Catégorie -->
     <nav class="categories-bar">
-        <button class="cat-chip active" data-category="ALL">Tous</button>
-        <button class="cat-chip" data-category="Action">Action</button>
-        <button class="cat-chip" data-category="Arcade">Arcade</button>
-        <button class="cat-chip" data-category="Réflexion">Réflexion</button>
-        <button class="cat-chip" data-category="Aventure">Aventure</button>
-        <button class="cat-chip" data-category="Autre">Autre</button>
+        <button type="button" class="cat-chip active" data-category="ALL">Tous</button>
+        <button type="button" class="cat-chip" data-category="Action">Action</button>
+        <button type="button" class="cat-chip" data-category="Arcade">Arcade</button>
+        <button type="button" class="cat-chip" data-category="Réflexion">Réflexion</button>
+        <button type="button" class="cat-chip" data-category="Aventure">Aventure</button>
+        <button type="button" class="cat-chip" data-category="Autre">Autre</button>
     </nav>
 
     <!-- Conteneur Principal pour la Grille de Jeux -->
@@ -48,7 +48,7 @@
         <div class="modal-card">
             <div class="modal-header">
                 <h2>Publier un Jeu Web</h2>
-                <button id="closePublish" class="close-modal">&times;</button>
+                <button type="button" id="closePublish" class="close-modal">&times;</button>
             </div>
             <form id="publishForm" class="modal-body">
                 <div class="form-group">
@@ -82,13 +82,13 @@
                     <input type="file" id="gameThumb" accept="image/*" required>
                 </div>
 
-                <!-- Mode Fichier HTML (Actif par défaut) -->
+                <!-- Mode Fichier HTML -->
                 <div id="fileGroup" class="form-group">
                     <label for="gameFile">Fichier du Jeu (.html autonome, max 20 Mo) *</label>
                     <input type="file" id="gameFile" accept=".html">
                 </div>
 
-                <!-- Mode Lien Extérieur (Bascule automatique si stockage saturé) -->
+                <!-- Mode Lien Extérieur -->
                 <div id="linkGroup" class="form-group hidden">
                     <label for="gameLink">Lien Extérieur (URL du jeu hébergé) *</label>
                     <input type="url" id="gameLink" placeholder="https://mon-jeu.example.com">
@@ -106,17 +106,17 @@
         <div class="modal-card">
             <div class="modal-header">
                 <h2>Paramètres</h2>
-                <button id="closeSettings" class="close-modal">&times;</button>
+                <button type="button" id="closeSettings" class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="settings-section">
                     <h3>Données Locales</h3>
                     <p class="info-text">Nettoyez le stockage temporaire utilisé par le navigateur.</p>
-                    <button id="clearDataBtn" class="btn btn-danger btn-sm">Effacer le Cache Local</button>
+                    <button type="button" id="clearDataBtn" class="btn btn-danger btn-sm">Effacer le Cache Local</button>
                 </div>
                 <div class="settings-section">
                     <h3>Informations Plateforme</h3>
-                    <button id="moreInfoBtn" class="btn btn-secondary btn-sm">En savoir plus</button>
+                    <button type="button" id="moreInfoBtn" class="btn btn-secondary btn-sm">En savoir plus</button>
                 </div>
             </div>
         </div>
@@ -127,7 +127,7 @@
         <div class="modal-card">
             <div class="modal-header">
                 <h2>À propos de GameHub</h2>
-                <button id="closeMoreInfo" class="close-modal">&times;</button>
+                <button type="button" id="closeMoreInfo" class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="custom-text-area">
@@ -135,7 +135,7 @@
                 </div>
                 <hr class="separator">
                 <div class="dev-access-wrapper">
-                    <button id="devNavBtn" class="btn-link">Accès Développeur / Administration</button>
+                    <button type="button" id="devNavBtn" class="btn-link">Accès Développeur / Administration</button>
                 </div>
             </div>
         </div>
@@ -146,12 +146,12 @@
         <div class="modal-card modal-large">
             <div class="modal-header">
                 <h2>Panneau de Gestion et Validation</h2>
-                <button id="closeAdmin" class="close-modal">&times;</button>
+                <button type="button" id="closeAdmin" class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
                 <!-- Section Connexion Admin -->
                 <div id="adminAuthSection">
-                    <form id="adminLoginForm" class="form-group">
+                    <form id="adminLoginForm">
                         <h3>Authentification Administrateur</h3>
                         <div class="form-group">
                             <label for="adminUsername">Identifiant</label>
@@ -161,31 +161,28 @@
                             <label for="adminPassword">Mot de passe</label>
                             <input type="password" id="adminPassword" required>
                         </div>
-                        <button type="submit" class="btn btn-primary">Se Connecter</button>
+                        <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Se Connecter</button>
                     </form>
                 </div>
 
-                <!-- Section Tableau de Bord Admin (Masquée par défaut) -->
+                <!-- Section Tableau de Bord Admin -->
                 <div id="adminDashboardSection" class="hidden">
                     <div class="admin-tabs">
-                        <button class="admin-tab active" data-tab="tabPending">Demandes (<span id="pendingCountBadge">0</span>)</button>
-                        <button class="admin-tab" data-tab="tabApproved">Jeux Publiés</button>
-                        <button class="admin-tab" data-tab="tabStorage">Stockage & Metrics</button>
-                        <button class="admin-tab" data-tab="tabLogs">Logs système</button>
-                        <button id="adminLogoutBtn" class="btn btn-danger btn-sm" style="margin-left: auto;">Déconnexion</button>
+                        <button type="button" class="admin-tab active" data-tab="tabPending">Demandes (<span id="pendingCountBadge">0</span>)</button>
+                        <button type="button" class="admin-tab" data-tab="tabApproved">Jeux Publiés</button>
+                        <button type="button" class="admin-tab" data-tab="tabStorage">Stockage & Metrics</button>
+                        <button type="button" class="admin-tab" data-tab="tabLogs">Logs système</button>
+                        <button type="button" id="adminLogoutBtn" class="btn btn-danger btn-sm" style="margin-left: auto;">Déconnexion</button>
                     </div>
 
-                    <!-- Onglet 1 : Demandes en attente -->
                     <div id="tabPending" class="tab-content active">
                         <div id="pendingListContainer"></div>
                     </div>
 
-                    <!-- Onglet 2 : Jeux Approuvés -->
                     <div id="tabApproved" class="tab-content">
                         <div id="approvedListContainer"></div>
                     </div>
 
-                    <!-- Onglet 3 : Métriques et Stockage -->
                     <div id="tabStorage" class="tab-content">
                         <h3>Utilisation du Stockage Cloud (Limite: 700 Mo)</h3>
                         <div class="progress-bar-container">
@@ -197,7 +194,6 @@
                         <p><strong>Demandes en attente :</strong> <span id="statPendingGames">0</span> (<span id="statPendingSize">0 Mo</span>)</p>
                     </div>
 
-                    <!-- Onglet 4 : Journaux Système -->
                     <div id="tabLogs" class="tab-content">
                         <ul id="logsContainer" class="logs-list"></ul>
                     </div>
@@ -206,7 +202,7 @@
         </div>
     </div>
 
-    <!-- Composants flottants d'information -->
+    <!-- Toast Notification & Badge -->
     <div id="toast" class="toast hidden"></div>
     <div class="version-badge">v1.0.0 — Production Supabase</div>
 
