@@ -30,6 +30,7 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    position: relative;
 }
 
 /* NAVBAR */
@@ -176,6 +177,7 @@ body {
 .container {
     padding: 2rem;
     flex: 1;
+    padding-bottom: 4rem;
 }
 
 .games-grid {
@@ -455,6 +457,22 @@ body {
     box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     z-index: 2000;
     transition: var(--transition);
+}
+
+/* BADGE DE VERSION (BAS A DROITE) */
+.version-badge {
+    position: fixed;
+    bottom: 12px;
+    right: 16px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    background-color: rgba(30, 30, 30, 0.85);
+    padding: 4px 10px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    pointer-events: none;
+    z-index: 900;
+    backdrop-filter: blur(4px);
 }
 
 /* RESPONSIVE DESIGN */
