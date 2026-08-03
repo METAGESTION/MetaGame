@@ -1,7 +1,13 @@
 // 1. CONFIGURATION SUPABASE
-const SUPABASE_URL = "https://ygvttaydgenzdmbsykfn.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_AzhjMaP1tzKYdyz01Tcmig_cUk44aNL";
+const SUPABASE_URL = "https://YOUR-SUPABASE-URL.supabase.co";
+const SUPABASE_ANON_KEY = "YOUR-SUPABASE-ANON-KEY";
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// IDENTIFIANTS ADMINISTRATION
+const ADMIN_CREDENTIALS = {
+    username: "admin",
+    password: "GameHub2026!"
+};
 
 const STORAGE_LIMIT_BYTES = 700 * 1024 * 1024;
 const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;
@@ -9,13 +15,11 @@ const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;
 let currentCategoryFilter = 'ALL';
 let currentSearchTerm = '';
 let currentTotalStorageBytes = 0;
+let isAdminAuthenticated = false;
 
-// Événement d'initialisation sécurisé
+// Initialisation au chargement du DOM
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Attachement immédiat des événements (Garantit le fonctionnement des clics)
     setupEventListeners();
-
-    // 2. Initialisation asynchrone des métriques et jeux Supabase
     initApp();
 });
 
@@ -24,21 +28,27 @@ async function initApp() {
         await checkStorageCapacityAndAdjustForm();
         await fetchApprovedGames();
     } catch (err) {
-        console.error("Erreur Supabase :", err);
+        console.error("Erreur d'initialisation :", err);
     }
 }
 
 function setupEventListeners() {
+    // Modales
     const publishBtn = document.getElementById('publishBtn');
     const closePublish = document.getElementById('closePublish');
     const settingsBtn = document.getElementById('settingsBtn');
     const closeSettings = document.getElementById('closeSettings');
-    const publishModal = document.getElementById('publishModal');
-    const settingsModal = document.getElementById('settingsModal');
-    const adminModal = document.getElementById('adminModal');
+    const moreInfoBtn = document.getElementById('moreInfoBtn');
+    const closeMoreInfo = document.getElementById('closeMoreInfo');
+    const devNavBtn = document.getElementById('devNavBtn');
     const closeAdmin = document.getElementById('closeAdmin');
 
-    // Modale Publier
+    const publishModal = document.getElementById('publishModal');
+    const settingsModal = document.getElementById('settingsModal');
+    const moreInfoModal = document.getElementById('moreInfoModal');
+    const adminModal = document.getElementById('adminModal');
+
+    // 1. Modale Publication
     if (publishBtn) {
         publishBtn.onclick = () => {
             checkStorageCapacityAndAdjustForm();
@@ -49,7 +59,7 @@ function setupEventListeners() {
         closePublish.onclick = () => publishModal.classList.remove('active');
     }
 
-    // Modale Paramètres
+    // 2. Modale Paramètres
     if (settingsBtn) {
         settingsBtn.onclick = () => settingsModal.classList.add('active');
     }
@@ -57,23 +67,68 @@ function setupEventListeners() {
         closeSettings.onclick = () => settingsModal.classList.remove('active');
     }
 
-    // Menu Caché Admin
-    const learnMoreBtn = document.getElementById('learnMoreBtn');
-    if (learnMoreBtn) {
-        learnMoreBtn.onclick = () => {
-            document.getElementById('learnMoreSection').classList.toggle('show');
+    // 3. Modale Plus d'infos
+    if (moreInfoBtn) {
+        moreInfoBtn.onclick = () => {
+            settingsModal.classList.remove('active');
+            moreInfoModal.classList.add('active');
         };
     }
+    if (closeMoreInfo) {
+        closeMoreInfo.onclick = () => moreInfoModal.classList.remove('active');
+    }
 
-    const devNavBtn = document.getElementById('devNavBtn');
+    // 4. Accès Administrateur ("Je suis développeur")
     if (devNavBtn) {
         devNavBtn.onclick = () => {
-            settingsModal.classList.remove('active');
+            moreInfoModal.classList.remove('active');
             adminModal.classList.add('active');
         };
     }
     if (closeAdmin) {
         closeAdmin.onclick = () => adminModal.classList.remove('active');
+    }
+
+    // Supprimer les données de sauvegarde du navigateur
+    const clearDataBtn = document.getElementById('clearDataBtn');
+    if (clearDataBtn) {
+        clearDataBtn.onclick = () => {
+            if (confirm("Voulez-vous vraiment effacer les données locales stockées par votre navigateur ?")) {
+                localStorage.clear();
+                sessionStorage.clear();
+                showToast("Données de sauvegarde du navigateur effacées.");
+            }
+        };
+    }
+
+    // Authentification Admin
+    const adminLoginForm = document.getElementById('adminLoginForm');
+    if (adminLoginForm) {
+        adminLoginForm.onsubmit = (e) => {
+            e.preventDefault();
+            const userIn = document.getElementById('adminUsername').value.trim();
+            const passIn = document.getElementById('adminPassword').value.trim();
+
+            if (userIn === ADMIN_CREDENTIALS.username && passIn === ADMIN_CREDENTIALS.password) {
+                isAdminAuthenticated = true;
+                showToast("Connexion au Panneau de Gestion réussie.");
+                loadAdminDashboard();
+            } else {
+                showToast("Nom d'utilisateur ou mot de passe incorrect.", true);
+            }
+        };
+    }
+
+    // Déconnexion Admin
+    const adminLogoutBtn = document.getElementById('adminLogoutBtn');
+    if (adminLogoutBtn) {
+        adminLogoutBtn.onclick = () => {
+            isAdminAuthenticated = false;
+            document.getElementById('adminAuthSection').classList.remove('hidden');
+            document.getElementById('adminDashboardSection').classList.add('hidden');
+            document.getElementById('adminLoginForm').reset();
+            showToast("Déconnexion effectuée.");
+        };
     }
 
     // Filtres par catégorie
@@ -86,7 +141,7 @@ function setupEventListeners() {
         };
     });
 
-    // Barre de recherche
+    // Recherche
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         searchInput.oninput = (e) => {
@@ -105,33 +160,6 @@ function setupEventListeners() {
             document.getElementById(e.target.dataset.tab).classList.add('active');
         };
     });
-
-    // Forms
-    const adminLoginForm = document.getElementById('adminLoginForm');
-    if (adminLoginForm) {
-        adminLoginForm.onsubmit = async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('adminEmail').value;
-            const password = document.getElementById('adminPassword').value;
-
-            const { error } = await supabase.auth.signInWithPassword({ email, password });
-            if (error) {
-                showToast("Identifiants administration invalides", true);
-            } else {
-                showToast("Connexion Meta Service réussie");
-                loadAdminDashboard();
-            }
-        };
-    }
-
-    const adminLogoutBtn = document.getElementById('adminLogoutBtn');
-    if (adminLogoutBtn) {
-        adminLogoutBtn.onclick = async () => {
-            await supabase.auth.signOut();
-            document.getElementById('adminAuthSection').classList.remove('hidden');
-            document.getElementById('adminDashboardSection').classList.add('hidden');
-        };
-    }
 }
 
 async function calculateStorageMetrics() {
@@ -203,7 +231,7 @@ function renderGames(games) {
     gamesGrid.innerHTML = '';
 
     if (!games || games.length === 0) {
-        gamesGrid.innerHTML = `<p class="help-text">Aucun jeu approuvé ne correspond à la recherche.</p>`;
+        gamesGrid.innerHTML = `<p class="help-text">Aucun jeu ne correspond à votre recherche.</p>`;
         return;
     }
 
@@ -271,7 +299,7 @@ document.getElementById('publishForm').addEventListener('submit', async (e) => {
 
         const thumbPath = `thumbs/${Date.now()}_${thumbFile.name}`;
         const { error: thumbErr } = await supabase.storage.from('thumbnails').upload(thumbPath, thumbFile);
-        if (thumbErr) throw new Error("Échec upload image.");
+        if (thumbErr) throw new Error("Échec de l'upload de l'image.");
         const thumbUrl = supabase.storage.from('thumbnails').getPublicUrl(thumbPath).data.publicUrl;
 
         const isFileMode = currentTotalStorageBytes < STORAGE_LIMIT_BYTES;
@@ -285,14 +313,14 @@ document.getElementById('publishForm').addEventListener('submit', async (e) => {
             const gameFile = document.getElementById('gameFile').files[0];
             if (!gameFile) throw new Error("Fichier HTML requis.");
             if (!gameFile.name.endsWith('.html')) throw new Error("Seuls les fichiers .html sont acceptés.");
-            if (gameFile.size > MAX_FILE_SIZE_BYTES) throw new Error("Le fichier dépasse la taille maximale (20 Mo).");
+            if (gameFile.size > MAX_FILE_SIZE_BYTES) throw new Error("Le fichier dépasse la taille maximale autorisée (20 Mo).");
 
             fileSizeBytes = gameFile.size;
             sha256Hash = await computeSHA256(gameFile);
 
             const isDuplicate = await checkDuplicateHash(sha256Hash);
             if (isDuplicate) {
-                showToast("Ce jeu existe déjà.", true);
+                showToast("Ce jeu existe déjà sur la plateforme.", true);
                 submitBtn.disabled = false;
                 submitBtn.innerText = "Envoyer pour Validation";
                 return;
@@ -300,7 +328,7 @@ document.getElementById('publishForm').addEventListener('submit', async (e) => {
 
             filePath = `games_html/${Date.now()}_${gameFile.name}`;
             const { error: fileErr } = await supabase.storage.from('games').upload(filePath, gameFile);
-            if (fileErr) throw new Error("Échec upload fichier HTML.");
+            if (fileErr) throw new Error("Échec de l'upload du fichier HTML.");
 
         } else {
             externalUrl = document.getElementById('gameLink').value.trim();
@@ -494,9 +522,8 @@ async function renderStorageAndStats() {
 }
 
 async function logAdminAction(action, targetId, details) {
-    const { data: { user } } = await supabase.auth.getUser();
     await supabase.from('admin_logs').insert([{
-        admin_id: user ? user.id : null,
+        admin_id: null,
         action,
         target_id: targetId,
         details
