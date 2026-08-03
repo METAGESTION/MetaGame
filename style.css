@@ -1,7 +1,3 @@
-/* ==========================================
-   GAMEHUB - STYLES DARK THEME (EPIC/STEAM)
-   ========================================== */
-
 :root {
     --bg-dark: #121212;
     --bg-surface: #1e1e1e;
@@ -33,7 +29,6 @@ body {
     position: relative;
 }
 
-/* NAVBAR */
 .navbar {
     display: flex;
     justify-content: space-between;
@@ -90,7 +85,6 @@ body {
     gap: 1rem;
 }
 
-/* BUTTONS */
 .btn {
     padding: 0.6rem 1.2rem;
     border-radius: var(--radius);
@@ -103,6 +97,7 @@ body {
     justify-content: center;
     gap: 0.5rem;
     text-decoration: none;
+    pointer-events: auto;
 }
 
 .btn-primary {
@@ -147,7 +142,6 @@ body {
     padding: 0;
 }
 
-/* CATEGORIES BAR */
 .categories-bar {
     display: flex;
     gap: 0.5rem;
@@ -173,7 +167,6 @@ body {
     border-color: var(--primary);
 }
 
-/* MAIN GRID */
 .container {
     padding: 2rem;
     flex: 1;
@@ -186,7 +179,6 @@ body {
     gap: 1.5rem;
 }
 
-/* CARD GAME */
 .game-card {
     background-color: var(--bg-card);
     border-radius: var(--radius);
@@ -252,7 +244,6 @@ body {
     width: 100%;
 }
 
-/* MODALS */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -356,7 +347,6 @@ body {
     display: block;
 }
 
-/* ADMIN DASHBOARD STYLES */
 .admin-tabs {
     display: flex;
     gap: 0.5rem;
@@ -445,7 +435,6 @@ body {
     border-bottom: 1px solid var(--border-color);
 }
 
-/* TOAST */
 .toast {
     position: fixed;
     bottom: 20px;
@@ -459,7 +448,6 @@ body {
     transition: var(--transition);
 }
 
-/* BADGE DE VERSION (BAS A DROITE) */
 .version-badge {
     position: fixed;
     bottom: 12px;
@@ -475,7 +463,6 @@ body {
     backdrop-filter: blur(4px);
 }
 
-/* RESPONSIVE DESIGN */
 @media (max-width: 768px) {
     .navbar {
         flex-direction: column;
