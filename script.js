@@ -1,7 +1,7 @@
-// 1. CONFIGURATION SUPABASE
+// CONFIGURATION SUPABASE
 const SUPABASE_URL = "https://YOUR-SUPABASE-URL.supabase.co";
 const SUPABASE_ANON_KEY = "YOUR-SUPABASE-ANON-KEY";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
 // IDENTIFIANTS ADMINISTRATION
 const ADMIN_CREDENTIALS = {
@@ -15,15 +15,14 @@ const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;
 let currentCategoryFilter = 'ALL';
 let currentSearchTerm = '';
 let currentTotalStorageBytes = 0;
-let isAdminAuthenticated = false;
 
-// Initialisation au chargement du DOM
 document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     initApp();
 });
 
 async function initApp() {
+    if (!supabase) return;
     try {
         await checkStorageCapacityAndAdjustForm();
         await fetchApprovedGames();
@@ -33,7 +32,6 @@ async function initApp() {
 }
 
 function setupEventListeners() {
-    // Modales
     const publishBtn = document.getElementById('publishBtn');
     const closePublish = document.getElementById('closePublish');
     const settingsBtn = document.getElementById('settingsBtn');
@@ -48,48 +46,33 @@ function setupEventListeners() {
     const moreInfoModal = document.getElementById('moreInfoModal');
     const adminModal = document.getElementById('adminModal');
 
-    // 1. Modale Publication
     if (publishBtn) {
         publishBtn.onclick = () => {
             checkStorageCapacityAndAdjustForm();
             publishModal.classList.add('active');
         };
     }
-    if (closePublish) {
-        closePublish.onclick = () => publishModal.classList.remove('active');
-    }
+    if (closePublish) closePublish.onclick = () => publishModal.classList.remove('active');
 
-    // 2. Modale Paramètres
-    if (settingsBtn) {
-        settingsBtn.onclick = () => settingsModal.classList.add('active');
-    }
-    if (closeSettings) {
-        closeSettings.onclick = () => settingsModal.classList.remove('active');
-    }
+    if (settingsBtn) settingsBtn.onclick = () => settingsModal.classList.add('active');
+    if (closeSettings) closeSettings.onclick = () => settingsModal.classList.remove('active');
 
-    // 3. Modale Plus d'infos
     if (moreInfoBtn) {
         moreInfoBtn.onclick = () => {
             settingsModal.classList.remove('active');
             moreInfoModal.classList.add('active');
         };
     }
-    if (closeMoreInfo) {
-        closeMoreInfo.onclick = () => moreInfoModal.classList.remove('active');
-    }
+    if (closeMoreInfo) closeMoreInfo.onclick = () => moreInfoModal.classList.remove('active');
 
-    // 4. Accès Administrateur ("Je suis développeur")
     if (devNavBtn) {
         devNavBtn.onclick = () => {
             moreInfoModal.classList.remove('active');
             adminModal.classList.add('active');
         };
     }
-    if (closeAdmin) {
-        closeAdmin.onclick = () => adminModal.classList.remove('active');
-    }
+    if (closeAdmin) closeAdmin.onclick = () => adminModal.classList.remove('active');
 
-    // Supprimer les données de sauvegarde du navigateur
     const clearDataBtn = document.getElementById('clearDataBtn');
     if (clearDataBtn) {
         clearDataBtn.onclick = () => {
@@ -101,7 +84,6 @@ function setupEventListeners() {
         };
     }
 
-    // Authentification Admin
     const adminLoginForm = document.getElementById('adminLoginForm');
     if (adminLoginForm) {
         adminLoginForm.onsubmit = (e) => {
@@ -110,7 +92,6 @@ function setupEventListeners() {
             const passIn = document.getElementById('adminPassword').value.trim();
 
             if (userIn === ADMIN_CREDENTIALS.username && passIn === ADMIN_CREDENTIALS.password) {
-                isAdminAuthenticated = true;
                 showToast("Connexion au Panneau de Gestion réussie.");
                 loadAdminDashboard();
             } else {
@@ -119,11 +100,9 @@ function setupEventListeners() {
         };
     }
 
-    // Déconnexion Admin
     const adminLogoutBtn = document.getElementById('adminLogoutBtn');
     if (adminLogoutBtn) {
         adminLogoutBtn.onclick = () => {
-            isAdminAuthenticated = false;
             document.getElementById('adminAuthSection').classList.remove('hidden');
             document.getElementById('adminDashboardSection').classList.add('hidden');
             document.getElementById('adminLoginForm').reset();
@@ -131,7 +110,6 @@ function setupEventListeners() {
         };
     }
 
-    // Filtres par catégorie
     document.querySelectorAll('.cat-chip').forEach(chip => {
         chip.onclick = (e) => {
             document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
@@ -141,7 +119,6 @@ function setupEventListeners() {
         };
     });
 
-    // Recherche
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         searchInput.oninput = (e) => {
@@ -150,7 +127,6 @@ function setupEventListeners() {
         };
     }
 
-    // Onglets Dashboard Admin
     document.querySelectorAll('.admin-tab').forEach(tab => {
         tab.onclick = (e) => {
             document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
@@ -160,21 +136,20 @@ function setupEventListeners() {
             document.getElementById(e.target.dataset.tab).classList.add('active');
         };
     });
+
+    const publishForm = document.getElementById('publishForm');
+    if (publishForm) {
+        publishForm.addEventListener('submit', handlePublishSubmit);
+    }
 }
 
 async function calculateStorageMetrics() {
-    const { data: approved, error: err1 } = await supabase.from('games').select('file_size_bytes');
-    const { data: pending, error: err2 } = await supabase.from('pending_games').select('file_size_bytes').eq('status', 'pending');
+    if (!supabase) return { approvedSize: 0, pendingSize: 0, countApproved: 0, countPending: 0 };
+    const { data: approved } = await supabase.from('games').select('file_size_bytes');
+    const { data: pending } = await supabase.from('pending_games').select('file_size_bytes').eq('status', 'pending');
 
-    let approvedSize = 0;
-    let pendingSize = 0;
-
-    if (!err1 && approved) {
-        approvedSize = approved.reduce((acc, curr) => acc + (curr.file_size_bytes || 0), 0);
-    }
-    if (!err2 && pending) {
-        pendingSize = pending.reduce((acc, curr) => acc + (curr.file_size_bytes || 0), 0);
-    }
+    const approvedSize = approved ? approved.reduce((acc, curr) => acc + (curr.file_size_bytes || 0), 0) : 0;
+    const pendingSize = pending ? pending.reduce((acc, curr) => acc + (curr.file_size_bytes || 0), 0) : 0;
 
     currentTotalStorageBytes = approvedSize;
     return { approvedSize, pendingSize, countApproved: approved?.length || 0, countPending: pending?.length || 0 };
@@ -201,6 +176,7 @@ async function checkStorageCapacityAndAdjustForm() {
 }
 
 async function fetchApprovedGames() {
+    if (!supabase) return;
     let query = supabase.from('games').select('*').order('created_at', { ascending: false });
 
     if (currentCategoryFilter !== 'ALL') {
@@ -246,17 +222,17 @@ function renderGames(games) {
 
         card.innerHTML = `
             <div class="card-img-wrapper">
-                <img src="${game.image_url}" alt="${game.title}" loading="lazy">
+                <img src="${game.image_url}" alt="${escapeHtml(game.title)}" loading="lazy">
             </div>
             <div class="card-content">
                 <div class="card-title">${escapeHtml(game.title)}</div>
                 <div class="card-author">Par ${escapeHtml(game.author_name)} (${game.category})</div>
                 <div class="card-meta">
                     <span>Taille: ${game.type === 'file' ? sizeInMb + ' Mo' : 'Lien Ext.'}</span>
-                    <span>Téléchargements: ${game.downloads_count}</span>
+                    <span>Téléchargements: ${game.downloads_count || 0}</span>
                 </div>
                 <div class="card-actions">
-                    <a href="${playUrl}" target="_blank" class="btn btn-primary play-btn" data-id="${game.id}">Jouer</a>
+                    <a href="${playUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-primary play-btn">Jouer</a>
                 </div>
             </div>
         `;
@@ -276,12 +252,10 @@ async function checkDuplicateHash(sha256) {
     if (existingApproved && existingApproved.length > 0) return true;
 
     const { data: existingPending } = await supabase.from('pending_games').select('id').eq('sha256_hash', sha256);
-    if (existingPending && existingPending.length > 0) return true;
-
-    return false;
+    return existingPending && existingPending.length > 0;
 }
 
-document.getElementById('publishForm').addEventListener('submit', async (e) => {
+async function handlePublishSubmit(e) {
     e.preventDefault();
     const submitBtn = document.getElementById('submitGameBtn');
     submitBtn.disabled = true;
@@ -362,7 +336,7 @@ document.getElementById('publishForm').addEventListener('submit', async (e) => {
         submitBtn.disabled = false;
         submitBtn.innerText = "Envoyer pour Validation";
     }
-});
+}
 
 async function loadAdminDashboard() {
     document.getElementById('adminAuthSection').classList.add('hidden');
@@ -394,7 +368,7 @@ async function renderPendingRequests() {
             : req.external_url;
 
         div.innerHTML = `
-            <img src="${req.image_url}" class="admin-item-img" alt="thumb">
+            <img src="${req.image_url}" class="admin-item-img" alt="Aperçu ${escapeHtml(req.title)}">
             <div class="admin-item-details">
                 <h4>${escapeHtml(req.title)} (${req.category})</h4>
                 <p><small>Auteur: ${escapeHtml(req.author_name)} (${escapeHtml(req.author_email)})</small></p>
@@ -402,9 +376,9 @@ async function renderPendingRequests() {
                 <p><small>${escapeHtml(req.description)}</small></p>
             </div>
             <div class="admin-item-actions">
-                <a href="${openUrl}" target="_blank" class="btn btn-secondary btn-sm">Ouvrir</a>
-                <button class="btn btn-primary btn-sm" onclick="approveGame('${req.id}')">Autoriser</button>
-                <button class="btn btn-danger btn-sm" onclick="rejectGame('${req.id}')">Refuser</button>
+                <a href="${openUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">Ouvrir</a>
+                <button type="button" class="btn btn-primary btn-sm" onclick="approveGame('${req.id}')">Autoriser</button>
+                <button type="button" class="btn btn-danger btn-sm" onclick="rejectGame('${req.id}')">Refuser</button>
             </div>
         `;
         container.appendChild(div);
@@ -467,13 +441,13 @@ async function renderApprovedAdminList() {
         const div = document.createElement('div');
         div.className = 'admin-item-card';
         div.innerHTML = `
-            <img src="${game.image_url}" class="admin-item-img" alt="thumb">
+            <img src="${game.image_url}" class="admin-item-img" alt="Aperçu ${escapeHtml(game.title)}">
             <div class="admin-item-details">
                 <h4>${escapeHtml(game.title)}</h4>
                 <p><small>Auteur: ${escapeHtml(game.author_name)}</small></p>
             </div>
             <div class="admin-item-actions">
-                <button class="btn btn-danger btn-sm" onclick="deleteApprovedGame('${game.id}')">Supprimer Définitivement</button>
+                <button type="button" class="btn btn-danger btn-sm" onclick="deleteApprovedGame('${game.id}')">Supprimer Définitivement</button>
             </div>
         `;
         container.appendChild(div);
@@ -522,6 +496,7 @@ async function renderStorageAndStats() {
 }
 
 async function logAdminAction(action, targetId, details) {
+    if (!supabase) return;
     await supabase.from('admin_logs').insert([{
         admin_id: null,
         action,
@@ -531,6 +506,7 @@ async function logAdminAction(action, targetId, details) {
 }
 
 async function renderLogs() {
+    if (!supabase) return;
     const { data: logs } = await supabase.from('admin_logs').select('*').order('created_at', { ascending: false }).limit(50);
     const container = document.getElementById('logsContainer');
     container.innerHTML = '';
