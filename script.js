@@ -1,534 +1,498 @@
 /* ==========================================
-   GAMEHUB - FULL LOGIC (SUPABASE & ADMIN)
+   GAMEHUB - STYLES DARK THEME (EPIC/STEAM)
    ========================================== */
 
-// 1. CONFIGURATION SUPABASE
-const SUPABASE_URL = "https://ygvttaydgenzdmbsykfn.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_AzhjMaP1tzKYdyz01Tcmig_cUk44aNL";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// Limits Configuration
-const STORAGE_LIMIT_BYTES = 700 * 1024 * 1024; // 700 MB
-const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;  // 20 MB
-
-// State
-let currentCategoryFilter = 'ALL';
-let currentSearchTerm = '';
-let currentTotalStorageBytes = 0;
-
-// DOM Elements
-const gamesGrid = document.getElementById('gamesGrid');
-const searchInput = document.getElementById('searchInput');
-const publishModal = document.getElementById('publishModal');
-const settingsModal = document.getElementById('settingsModal');
-const adminModal = document.getElementById('adminModal');
-
-// Init application
-document.addEventListener('DOMContentLoaded', () => {
-    initApp();
-    setupEventListeners();
-});
-
-async function initApp() {
-    await checkStorageCapacityAndAdjustForm();
-    await fetchApprovedGames();
+:root {
+    --bg-dark: #121212;
+    --bg-surface: #1e1e1e;
+    --bg-card: #252529;
+    --primary: #0078f2;
+    --primary-hover: #005bb5;
+    --accent: #00df9a;
+    --danger: #ff4757;
+    --text-main: #f5f5f5;
+    --text-muted: #aaaaaa;
+    --border-color: #333338;
+    --radius: 8px;
+    --transition: all 0.25s ease-in-out;
 }
 
-// 2. STORAGE METRICS CALCULATIONS
-async function calculateStorageMetrics() {
-    // Calculer le stockage cumulé des jeux approuvés
-    const { data: approved, error: err1 } = await supabase.from('games').select('file_size_bytes');
-    const { data: pending, error: err2 } = await supabase.from('pending_games').select('file_size_bytes').eq('status', 'pending');
-
-    let approvedSize = 0;
-    let pendingSize = 0;
-
-    if (!err1 && approved) {
-        approvedSize = approved.reduce((acc, curr) => acc + (curr.file_size_bytes || 0), 0);
-    }
-    if (!err2 && pending) {
-        pendingSize = pending.reduce((acc, curr) => acc + (curr.file_size_bytes || 0), 0);
-    }
-
-    currentTotalStorageBytes = approvedSize;
-    return { approvedSize, pendingSize, countApproved: approved?.length || 0, countPending: pending?.length || 0 };
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-async function checkStorageCapacityAndAdjustForm() {
-    const { approvedSize } = await calculateStorageMetrics();
-    const fileGroup = document.getElementById('fileGroup');
-    const linkGroup = document.getElementById('linkGroup');
-    const gameFileInput = document.getElementById('gameFile');
-    const gameLinkInput = document.getElementById('gameLink');
-
-    if (approvedSize >= STORAGE_LIMIT_BYTES) {
-        // Basculement automatique : Mode Lien uniquement
-        fileGroup.classList.add('hidden');
-        linkGroup.classList.remove('hidden');
-        gameFileInput.removeAttribute('required');
-        gameLinkInput.setAttribute('required', 'true');
-    } else {
-        // Mode Fichier actif
-        fileGroup.classList.remove('hidden');
-        linkGroup.classList.add('hidden');
-        gameFileInput.setAttribute('required', 'true');
-        gameLinkInput.removeAttribute('required');
-    }
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
 }
 
-// 3. FETCH AND DISPLAY APPROVED GAMES
-async function fetchApprovedGames() {
-    let query = supabase.from('games').select('*').order('created_at', { ascending: false });
-
-    if (currentCategoryFilter !== 'ALL') {
-        query = query.eq('category', currentCategoryFilter);
-    }
-
-    const { data: games, error } = await query;
-
-    if (error) {
-        showToast("Erreur lors du chargement des jeux", true);
-        return;
-    }
-
-    // Filtre frontend sur la barre de recherche (Nom, Auteur, Catégorie)
-    const filtered = games.filter(game => {
-        const term = currentSearchTerm.toLowerCase();
-        return game.title.toLowerCase().includes(term) ||
-               game.author_name.toLowerCase().includes(term) ||
-               game.category.toLowerCase().includes(term);
-    });
-
-    renderGames(filtered);
+/* NAVBAR */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background-color: var(--bg-surface);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
-function renderGames(games) {
-    gamesGrid.innerHTML = '';
-
-    if (games.length === 0) {
-        gamesGrid.innerHTML = `<p class="help-text">Aucun jeu approuvé ne correspond à la recherche.</p>`;
-        return;
-    }
-
-    games.forEach(game => {
-        const card = document.createElement('div');
-        card.className = 'game-card';
-
-        const sizeInMb = (game.file_size_bytes / (1024 * 1024)).toFixed(1);
-        const playUrl = game.type === 'file' 
-            ? supabase.storage.from('games').getPublicUrl(game.file_path).data.publicUrl
-            : game.external_url;
-
-        card.innerHTML = `
-            <div class="card-img-wrapper">
-                <img src="${game.image_url}" alt="${game.title}" loading="lazy">
-            </div>
-            <div class="card-content">
-                <div class="card-title">${escapeHtml(game.title)}</div>
-                <div class="card-author">Par ${escapeHtml(game.author_name)} (${game.category})</div>
-                <div class="card-meta">
-                    <span>Taille: ${game.type === 'file' ? sizeInMb + ' Mo' : 'Lien Ext.'}</span>
-                    <span>Téléchargements: ${game.downloads_count}</span>
-                </div>
-                <div class="card-actions">
-                    <a href="${playUrl}" target="_blank" class="btn btn-primary play-btn" data-id="${game.id}">Jouer</a>
-                </div>
-            </div>
-        `;
-        gamesGrid.appendChild(card);
-    });
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    flex: 1;
 }
 
-// 4. SHA-256 HASH COMPUTATION
-async function computeSHA256(file) {
-    const buffer = await file.arrayBuffer();
-    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+.logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
 }
 
-// 5. ANTI-DUPLICATE CHECK
-async function checkDuplicateHash(sha256) {
-    const { data: existingApproved } = await supabase.from('games').select('id').eq('sha256_hash', sha256);
-    if (existingApproved && existingApproved.length > 0) return true;
-
-    const { data: existingPending } = await supabase.from('pending_games').select('id').eq('sha256_hash', sha256);
-    if (existingPending && existingPending.length > 0) return true;
-
-    return false;
+.logo .highlight {
+    color: var(--primary);
 }
 
-// 6. PUBLICATION FORM SUBMISSION
-document.getElementById('publishForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const submitBtn = document.getElementById('submitGameBtn');
-    submitBtn.disabled = true;
-    submitBtn.innerText = "Traitement en cours...";
-
-    try {
-        const authorName = document.getElementById('authorName').value.trim();
-        const authorEmail = document.getElementById('authorEmail').value.trim();
-        const title = document.getElementById('gameTitle').value.trim();
-        const category = document.getElementById('gameCategory').value;
-        const description = document.getElementById('gameDesc').value.trim();
-        const thumbFile = document.getElementById('gameThumb').files[0];
-
-        if (!thumbFile) throw new Error("Miniature obligatoire.");
-
-        // Upload Miniature
-        const thumbPath = `thumbs/${Date.now()}_${thumbFile.name}`;
-        const { error: thumbErr } = await supabase.storage.from('thumbnails').upload(thumbPath, thumbFile);
-        if (thumbErr) throw new Error("Échec upload image.");
-        const thumbUrl = supabase.storage.from('thumbnails').getPublicUrl(thumbPath).data.publicUrl;
-
-        // Déterminer le mode (Fichier vs Link)
-        const isFileMode = currentTotalStorageBytes < STORAGE_LIMIT_BYTES;
-
-        let filePath = null;
-        let externalUrl = null;
-        let fileSizeBytes = 0;
-        let sha256Hash = null;
-
-        if (isFileMode) {
-            const gameFile = document.getElementById('gameFile').files[0];
-            if (!gameFile) throw new Error("Fichier HTML requis.");
-            if (!gameFile.name.endsWith('.html')) throw new Error("Seuls les fichiers .html sont acceptés.");
-            if (gameFile.size > MAX_FILE_SIZE_BYTES) throw new Error("Le fichier dépasse la taille maximale (20 Mo).");
-
-            fileSizeBytes = gameFile.size;
-            sha256Hash = await computeSHA256(gameFile);
-
-            // Vérification Anti-Doublon
-            const isDuplicate = await checkDuplicateHash(sha256Hash);
-            if (isDuplicate) {
-                showToast("Ce jeu existe déjà.", true);
-                submitBtn.disabled = false;
-                submitBtn.innerText = "Envoyer pour Validation";
-                return;
-            }
-
-            // Upload HTML Storage
-            filePath = `games_html/${Date.now()}_${gameFile.name}`;
-            const { error: fileErr } = await supabase.storage.from('games').upload(filePath, gameFile);
-            if (fileErr) throw new Error("Échec upload fichier HTML.");
-
-        } else {
-            externalUrl = document.getElementById('gameLink').value.trim();
-            if (!externalUrl) throw new Error("Lien externe requis.");
-        }
-
-        // Insertion dans pending_games
-        const { error: insertErr } = await supabase.from('pending_games').insert([{
-            title,
-            author_name: authorName,
-            author_email: authorEmail,
-            description,
-            category,
-            type: isFileMode ? 'file' : 'link',
-            file_path: filePath,
-            external_url: externalUrl,
-            image_url: thumbUrl,
-            file_size_bytes: fileSizeBytes,
-            sha256_hash: sha256Hash,
-            status: 'pending'
-        }]);
-
-        if (insertErr) throw insertErr;
-
-        showToast("Demande de publication envoyée avec succès !");
-        publishModal.classList.remove('active');
-        document.getElementById('publishForm').reset();
-
-    } catch (err) {
-        showToast(err.message || "Erreur de publication", true);
-    } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerText = "Envoyer pour Validation";
-    }
-});
-
-// 7. NAVIGATION ET CACHOTTERIE ADMIN (META SERVICE)
-function setupEventListeners() {
-    // Filtres
-    document.querySelectorAll('.cat-chip').forEach(chip => {
-        chip.addEventListener('click', (e) => {
-            document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
-            e.target.classList.add('active');
-            currentCategoryFilter = e.target.dataset.category;
-            fetchApprovedGames();
-        });
-    });
-
-    // Recherche instantanée
-    searchInput.addEventListener('input', (e) => {
-        currentSearchTerm = e.target.value;
-        fetchApprovedGames();
-    });
-
-    // Modales toggles
-    document.getElementById('publishBtn').onclick = () => {
-        checkStorageCapacityAndAdjustForm();
-        publishModal.classList.add('active');
-    };
-    document.getElementById('closePublish').onclick = () => publishModal.classList.remove('active');
-
-    document.getElementById('settingsBtn').onclick = () => settingsModal.classList.add('active');
-    document.getElementById('closeSettings').onclick = () => settingsModal.classList.remove('active');
-
-    // Menu Caché Admin: Paramètres -> En savoir plus -> Je suis développeur
-    document.getElementById('learnMoreBtn').onclick = () => {
-        document.getElementById('learnMoreSection').classList.toggle('show');
-    };
-
-    document.getElementById('devNavBtn').onclick = () => {
-        settingsModal.classList.remove('active');
-        adminModal.classList.add('active');
-    };
-    document.getElementById('closeAdmin').onclick = () => adminModal.classList.remove('active');
-
-    // Navigation Onglets Admin
-    document.querySelectorAll('.admin-tab').forEach(tab => {
-        tab.addEventListener('click', (e) => {
-            document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            
-            e.target.classList.add('active');
-            document.getElementById(e.target.dataset.tab).classList.add('active');
-        });
-    });
-
-    // Login Admin
-    document.getElementById('adminLoginForm').onsubmit = async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('adminEmail').value;
-        const password = document.getElementById('adminPassword').value;
-
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) {
-            showToast("Identifiants administration invalides", true);
-        } else {
-            showToast("Connexion Meta Service réussie");
-            loadAdminDashboard();
-        }
-    };
-
-    document.getElementById('adminLogoutBtn').onclick = async () => {
-        await supabase.auth.signOut();
-        document.getElementById('adminAuthSection').classList.remove('hidden');
-        document.getElementById('adminDashboardSection').classList.add('hidden');
-    };
+.search-box {
+    flex: 0 1 400px;
 }
 
-// 8. TABLEAU DE BORD ADMIN & ACTIONS
-async function loadAdminDashboard() {
-    document.getElementById('adminAuthSection').classList.add('hidden');
-    document.getElementById('adminDashboardSection').classList.remove('hidden');
-
-    await renderPendingRequests();
-    await renderApprovedAdminList();
-    await renderStorageAndStats();
-    await renderLogs();
+.search-box input {
+    width: 100%;
+    padding: 0.6rem 1rem;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-card);
+    color: var(--text-main);
+    outline: none;
+    transition: var(--transition);
 }
 
-// Affichage des demandes
-async function renderPendingRequests() {
-    const { data: requests } = await supabase.from('pending_games').select('*').eq('status', 'pending');
-    const container = document.getElementById('pendingListContainer');
-    document.getElementById('pendingCountBadge').innerText = requests ? requests.length : 0;
-
-    container.innerHTML = '';
-    if (!requests || requests.length === 0) {
-        container.innerHTML = '<p class="help-text">Aucune demande en attente.</p>';
-        return;
-    }
-
-    requests.forEach(req => {
-        const div = document.createElement('div');
-        div.className = 'admin-item-card';
-        const sizeMb = (req.file_size_bytes / (1024 * 1024)).toFixed(1);
-        const openUrl = req.type === 'file' 
-            ? supabase.storage.from('games').getPublicUrl(req.file_path).data.publicUrl
-            : req.external_url;
-
-        div.innerHTML = `
-            <img src="${req.image_url}" class="admin-item-img" alt="thumb">
-            <div class="admin-item-details">
-                <h4>${escapeHtml(req.title)} (${req.category})</h4>
-                <p><small>Auteur: ${escapeHtml(req.author_name)} (${escapeHtml(req.author_email)})</small></p>
-                <p><small>Taille: ${req.type === 'file' ? sizeMb + ' Mo' : 'Lien Ext.'} | Date: ${new Date(req.created_at).toLocaleDateString()}</small></p>
-                <p><small>${escapeHtml(req.description)}</small></p>
-            </div>
-            <div class="admin-item-actions">
-                <a href="${openUrl}" target="_blank" class="btn btn-secondary btn-sm">Ouvrir</a>
-                <button class="btn btn-primary btn-sm" onclick="approveGame('${req.id}')">Autoriser</button>
-                <button class="btn btn-danger btn-sm" onclick="rejectGame('${req.id}')">Refuser</button>
-            </div>
-        `;
-        container.appendChild(div);
-    });
+.search-box input:focus {
+    border-color: var(--primary);
 }
 
-// Action Autoriser
-window.approveGame = async function(requestId) {
-    const { data: req } = await supabase.from('pending_games').select('*').eq('id', requestId).single();
-    if (!req) return;
-
-    // 1. Inserer dans la table `games`
-    const { error: insErr } = await supabase.from('games').insert([{
-        title: req.title,
-        author_name: req.author_name,
-        author_email: req.author_email,
-        description: req.description,
-        category: req.category,
-        type: req.type,
-        file_path: req.file_path,
-        external_url: req.external_url,
-        image_url: req.image_url,
-        file_size_bytes: req.file_size_bytes,
-        sha256_hash: req.sha256_hash
-    }]);
-
-    if (insErr) {
-        showToast("Erreur lors de l'approbation", true);
-        return;
-    }
-
-    // 2. Mettre à jour le statut dans `pending_games`
-    await supabase.from('pending_games').update({ status: 'approved' }).eq('id', requestId);
-
-    // 3. Logger l'action
-    await logAdminAction('AUTORISER_JEU', requestId, `Jeu approuvé: ${req.title}`);
-
-    showToast("Jeu approuvé et rendu public !");
-    loadAdminDashboard();
-    fetchApprovedGames();
-};
-
-// Action Refuser
-window.rejectGame = async function(requestId) {
-    const { data: req } = await supabase.from('pending_games').select('*').eq('id', requestId).single();
-    if (!req) return;
-
-    await supabase.from('pending_games').update({ status: 'rejected' }).eq('id', requestId);
-    await logAdminAction('REFUSER_JEU', requestId, `Demande refusée: ${req.title}`);
-
-    showToast("Demande refusée.");
-    loadAdminDashboard();
-};
-
-// Affichage et Suppression des jeux acceptés
-async function renderApprovedAdminList() {
-    const { data: games } = await supabase.from('games').select('*').order('created_at', { ascending: false });
-    const container = document.getElementById('approvedListContainer');
-    container.innerHTML = '';
-
-    if (!games || games.length === 0) {
-        container.innerHTML = '<p class="help-text">Aucun jeu approuvé.</p>';
-        return;
-    }
-
-    games.forEach(game => {
-        const div = document.createElement('div');
-        div.className = 'admin-item-card';
-        div.innerHTML = `
-            <img src="${game.image_url}" class="admin-item-img" alt="thumb">
-            <div class="admin-item-details">
-                <h4>${escapeHtml(game.title)}</h4>
-                <p><small>Auteur: ${escapeHtml(game.author_name)}</small></p>
-            </div>
-            <div class="admin-item-actions">
-                <button class="btn btn-danger btn-sm" onclick="deleteApprovedGame('${game.id}')">Supprimer Définitivement</button>
-            </div>
-        `;
-        container.appendChild(div);
-    });
+.nav-right {
+    display: flex;
+    gap: 1rem;
 }
 
-// Action Supprimer définitivement
-window.deleteApprovedGame = async function(gameId) {
-    if (!confirm("Voulez-vous supprimer définitivement ce jeu (fichiers, images et données) ?")) return;
+/* BUTTONS */
+.btn {
+    padding: 0.6rem 1.2rem;
+    border-radius: var(--radius);
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
 
-    const { data: game } = await supabase.from('games').select('*').eq('id', gameId).single();
-    if (!game) return;
+.btn-primary {
+    background-color: var(--primary);
+    color: #ffffff;
+}
 
-    // 1. Supprimer du Storage
-    if (game.type === 'file' && game.file_path) {
-        await supabase.storage.from('games').remove([game.file_path]);
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+}
+
+.btn-secondary {
+    background-color: var(--bg-card);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+    background-color: var(--border-color);
+}
+
+.btn-danger {
+    background-color: var(--danger);
+    color: #fff;
+}
+
+.btn-danger:hover {
+    opacity: 0.85;
+}
+
+.btn-sm {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.85rem;
+}
+
+.btn-link {
+    background: none;
+    border: none;
+    color: var(--primary);
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0;
+}
+
+/* CATEGORIES BAR */
+.categories-bar {
+    display: flex;
+    gap: 0.5rem;
+    padding: 1rem 2rem;
+    overflow-x: auto;
+    background-color: var(--bg-dark);
+}
+
+.cat-chip {
+    padding: 0.4rem 1rem;
+    border-radius: 15px;
+    background-color: var(--bg-surface);
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: var(--transition);
+}
+
+.cat-chip.active, .cat-chip:hover {
+    background-color: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+
+/* MAIN GRID */
+.container {
+    padding: 2rem;
+    flex: 1;
+    padding-bottom: 4rem;
+}
+
+.games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+/* CARD GAME */
+.game-card {
+    background-color: var(--bg-card);
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    transition: var(--transition);
+    display: flex;
+    flex-direction: column;
+}
+
+.game-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--primary);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+}
+
+.card-img-wrapper {
+    width: 100%;
+    height: 160px;
+    overflow: hidden;
+    background-color: var(--bg-surface);
+}
+
+.card-img-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.card-content {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 0.5rem;
+}
+
+.card-title {
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+.card-author {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.card-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: auto;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.card-actions {
+    margin-top: 0.8rem;
+}
+
+.card-actions .btn {
+    width: 100%;
+}
+
+/* MODALS */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.75);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-card {
+    background-color: var(--bg-surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border-color);
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-large {
+    max-width: 900px;
+}
+
+.modal-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.close-modal:hover {
+    color: var(--text-main);
+}
+
+.modal-body {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.form-group label {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.form-group input, .form-group select, .form-group textarea {
+    padding: 0.6rem;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-main);
+}
+
+.help-text {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.hidden {
+    display: none !important;
+}
+
+.hidden-section {
+    display: none;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.hidden-section.show {
+    display: block;
+}
+
+/* ADMIN DASHBOARD STYLES */
+.admin-tabs {
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.admin-tab {
+    padding: 0.5rem 1rem;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+}
+
+.admin-tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.progress-bar-container {
+    width: 100%;
+    height: 20px;
+    background-color: var(--bg-card);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 1rem 0;
+    border: 1px solid var(--border-color);
+}
+
+.progress-bar {
+    height: 100%;
+    background-color: var(--accent);
+    width: 0%;
+    transition: width 0.4s ease;
+}
+
+.admin-item-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    padding: 1rem;
+    border-radius: var(--radius);
+    margin-bottom: 1rem;
+    display: flex;
+    gap: 1rem;
+}
+
+.admin-item-img {
+    width: 100px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.admin-item-details {
+    flex: 1;
+}
+
+.admin-item-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.logs-list {
+    list-style: none;
+    max-height: 300px;
+    overflow-y: auto;
+    font-size: 0.85rem;
+    font-family: monospace;
+}
+
+.logs-list li {
+    padding: 0.4rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* TOAST */
+.toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--primary);
+    padding: 1rem 1.5rem;
+    border-radius: var(--radius);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    z-index: 2000;
+    transition: var(--transition);
+}
+
+/* BADGE DE VERSION (BAS A DROITE) */
+.version-badge {
+    position: fixed;
+    bottom: 12px;
+    right: 16px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    background-color: rgba(30, 30, 30, 0.85);
+    padding: 4px 10px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    pointer-events: none;
+    z-index: 900;
+    backdrop-filter: blur(4px);
+}
+
+/* RESPONSIVE DESIGN */
+@media (max-width: 768px) {
+    .navbar {
+        flex-direction: column;
+        gap: 1rem;
     }
-    if (game.image_url) {
-        const urlParts = game.image_url.split('/');
-        const thumbFileName = urlParts[urlParts.length - 1];
-        await supabase.storage.from('thumbnails').remove([`thumbs/${thumbFileName}`]);
-    }
-
-    // 2. Supprimer la ligne SQL
-    await supabase.from('games').delete().eq('id', gameId);
-
-    // 3. Log
-    await logAdminAction('SUPPRIMER_JEU', gameId, `Jeu et assets supprimés: ${game.title}`);
-
-    showToast("Jeu définitivement supprimé.");
-    loadAdminDashboard();
-    fetchApprovedGames();
-};
-
-// Render des Métriques de Stockage
-async function renderStorageAndStats() {
-    const metrics = await calculateStorageMetrics();
     
-    const usedMb = (metrics.approvedSize / (1024 * 1024)).toFixed(2);
-    const percent = Math.min(((metrics.approvedSize / STORAGE_LIMIT_BYTES) * 100), 100).toFixed(1);
-    const remainingMb = ((STORAGE_LIMIT_BYTES - metrics.approvedSize) / (1024 * 1024)).toFixed(2);
-
-    document.getElementById('storageProgressBar').style.width = `${percent}%`;
-    document.getElementById('storageUsedText').innerText = `${usedMb} Mo`;
-    document.getElementById('storagePercentText').innerText = `${percent}%`;
-    document.getElementById('storageRemainingText').innerText = `${remainingMb} Mo`;
-
-    document.getElementById('statApprovedGames').innerText = metrics.countApproved;
-    document.getElementById('statPendingGames').innerText = metrics.countPending;
-    document.getElementById('statApprovedSize').innerText = `${usedMb} Mo`;
-    document.getElementById('statPendingSize').innerText = `${(metrics.pendingSize / (1024 * 1024)).toFixed(2)} Mo`;
-}
-
-// Logger une action
-async function logAdminAction(action, targetId, details) {
-    const { data: { user } } = await supabase.auth.getUser();
-    await supabase.from('admin_logs').insert([{
-        admin_id: user ? user.id : null,
-        action,
-        target_id: targetId,
-        details
-    }]);
-}
-
-// Affichage des Logs
-async function renderLogs() {
-    const { data: logs } = await supabase.from('admin_logs').select('*').order('created_at', { ascending: false }).limit(50);
-    const container = document.getElementById('logsContainer');
-    container.innerHTML = '';
-
-    if (!logs || logs.length === 0) {
-        container.innerHTML = '<li>Aucun log disponible.</li>';
-        return;
+    .nav-left {
+        width: 100%;
+        flex-direction: column;
+        gap: 0.5rem;
     }
 
-    logs.forEach(log => {
-        const li = document.createElement('li');
-        li.innerText = `[${new Date(log.created_at).toLocaleString()}] ${log.action} - ${log.details}`;
-        container.appendChild(li);
-    });
-}
+    .search-box {
+        width: 100%;
+    }
 
-// Utility: Toast & Escaping
-function showToast(message, isError = false) {
-    const toast = document.getElementById('toast');
-    toast.innerText = message;
-    toast.style.borderColor = isError ? 'var(--danger)' : 'var(--accent)';
-    toast.classList.remove('hidden');
-    setTimeout(() => toast.classList.add('hidden'), 3500);
-}
-
-function escapeHtml(str) {
-    return str ? str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") : '';
+    .admin-item-card {
+        flex-direction: column;
+    }
 }
