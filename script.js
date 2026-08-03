@@ -1,34 +1,21 @@
-/* ==========================================
-   GAMEHUB - FULL LOGIC (SUPABASE & ADMIN)
-   ========================================== */
-
 // 1. CONFIGURATION SUPABASE
 const SUPABASE_URL = "https://YOUR-SUPABASE-URL.supabase.co";
 const SUPABASE_ANON_KEY = "YOUR-SUPABASE-ANON-KEY";
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Limits Configuration
-const STORAGE_LIMIT_BYTES = 700 * 1024 * 1024; // 700 MB
-const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;  // 20 MB
+const STORAGE_LIMIT_BYTES = 700 * 1024 * 1024;
+const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;
 
-// State
 let currentCategoryFilter = 'ALL';
 let currentSearchTerm = '';
 let currentTotalStorageBytes = 0;
 
-// DOM Elements
-const gamesGrid = document.getElementById('gamesGrid');
-const searchInput = document.getElementById('searchInput');
-const publishModal = document.getElementById('publishModal');
-const settingsModal = document.getElementById('settingsModal');
-const adminModal = document.getElementById('adminModal');
-
-// Execution au chargement du DOM
+// Événement d'initialisation sécurisé
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Attachement synchrone des écouteurs pour un fonctionnement immédiat des modales/boutons
+    // 1. Attachement immédiat des événements (Garantit le fonctionnement des clics)
     setupEventListeners();
 
-    // 2. Initialisation asynchrone des données Supabase
+    // 2. Initialisation asynchrone des métriques et jeux Supabase
     initApp();
 });
 
@@ -37,11 +24,116 @@ async function initApp() {
         await checkStorageCapacityAndAdjustForm();
         await fetchApprovedGames();
     } catch (err) {
-        console.error("Erreur d'initialisation de Supabase :", err);
+        console.error("Erreur Supabase :", err);
     }
 }
 
-// 2. STORAGE METRICS CALCULATIONS
+function setupEventListeners() {
+    const publishBtn = document.getElementById('publishBtn');
+    const closePublish = document.getElementById('closePublish');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const closeSettings = document.getElementById('closeSettings');
+    const publishModal = document.getElementById('publishModal');
+    const settingsModal = document.getElementById('settingsModal');
+    const adminModal = document.getElementById('adminModal');
+    const closeAdmin = document.getElementById('closeAdmin');
+
+    // Modale Publier
+    if (publishBtn) {
+        publishBtn.onclick = () => {
+            checkStorageCapacityAndAdjustForm();
+            publishModal.classList.add('active');
+        };
+    }
+    if (closePublish) {
+        closePublish.onclick = () => publishModal.classList.remove('active');
+    }
+
+    // Modale Paramètres
+    if (settingsBtn) {
+        settingsBtn.onclick = () => settingsModal.classList.add('active');
+    }
+    if (closeSettings) {
+        closeSettings.onclick = () => settingsModal.classList.remove('active');
+    }
+
+    // Menu Caché Admin
+    const learnMoreBtn = document.getElementById('learnMoreBtn');
+    if (learnMoreBtn) {
+        learnMoreBtn.onclick = () => {
+            document.getElementById('learnMoreSection').classList.toggle('show');
+        };
+    }
+
+    const devNavBtn = document.getElementById('devNavBtn');
+    if (devNavBtn) {
+        devNavBtn.onclick = () => {
+            settingsModal.classList.remove('active');
+            adminModal.classList.add('active');
+        };
+    }
+    if (closeAdmin) {
+        closeAdmin.onclick = () => adminModal.classList.remove('active');
+    }
+
+    // Filtres par catégorie
+    document.querySelectorAll('.cat-chip').forEach(chip => {
+        chip.onclick = (e) => {
+            document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+            e.target.classList.add('active');
+            currentCategoryFilter = e.target.dataset.category;
+            fetchApprovedGames();
+        };
+    });
+
+    // Barre de recherche
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.oninput = (e) => {
+            currentSearchTerm = e.target.value;
+            fetchApprovedGames();
+        };
+    }
+
+    // Onglets Dashboard Admin
+    document.querySelectorAll('.admin-tab').forEach(tab => {
+        tab.onclick = (e) => {
+            document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            e.target.classList.add('active');
+            document.getElementById(e.target.dataset.tab).classList.add('active');
+        };
+    });
+
+    // Forms
+    const adminLoginForm = document.getElementById('adminLoginForm');
+    if (adminLoginForm) {
+        adminLoginForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('adminEmail').value;
+            const password = document.getElementById('adminPassword').value;
+
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) {
+                showToast("Identifiants administration invalides", true);
+            } else {
+                showToast("Connexion Meta Service réussie");
+                loadAdminDashboard();
+            }
+        };
+    }
+
+    const adminLogoutBtn = document.getElementById('adminLogoutBtn');
+    if (adminLogoutBtn) {
+        adminLogoutBtn.onclick = async () => {
+            await supabase.auth.signOut();
+            document.getElementById('adminAuthSection').classList.remove('hidden');
+            document.getElementById('adminDashboardSection').classList.add('hidden');
+        };
+    }
+}
+
 async function calculateStorageMetrics() {
     const { data: approved, error: err1 } = await supabase.from('games').select('file_size_bytes');
     const { data: pending, error: err2 } = await supabase.from('pending_games').select('file_size_bytes').eq('status', 'pending');
@@ -68,13 +160,11 @@ async function checkStorageCapacityAndAdjustForm() {
     const gameLinkInput = document.getElementById('gameLink');
 
     if (approvedSize >= STORAGE_LIMIT_BYTES) {
-        // Mode Lien uniquement si >= 700 Mo
         fileGroup.classList.add('hidden');
         linkGroup.classList.remove('hidden');
         gameFileInput.removeAttribute('required');
         gameLinkInput.setAttribute('required', 'true');
     } else {
-        // Mode Fichier actif
         fileGroup.classList.remove('hidden');
         linkGroup.classList.add('hidden');
         gameFileInput.setAttribute('required', 'true');
@@ -82,7 +172,6 @@ async function checkStorageCapacityAndAdjustForm() {
     }
 }
 
-// 3. FETCH AND DISPLAY APPROVED GAMES
 async function fetchApprovedGames() {
     let query = supabase.from('games').select('*').order('created_at', { ascending: false });
 
@@ -97,17 +186,20 @@ async function fetchApprovedGames() {
         return;
     }
 
-    const filtered = games.filter(game => {
+    const filtered = games ? games.filter(game => {
         const term = currentSearchTerm.toLowerCase();
         return game.title.toLowerCase().includes(term) ||
                game.author_name.toLowerCase().includes(term) ||
                game.category.toLowerCase().includes(term);
-    });
+    }) : [];
 
     renderGames(filtered);
 }
 
 function renderGames(games) {
+    const gamesGrid = document.getElementById('gamesGrid');
+    if (!gamesGrid) return;
+    
     gamesGrid.innerHTML = '';
 
     if (!games || games.length === 0) {
@@ -144,7 +236,6 @@ function renderGames(games) {
     });
 }
 
-// 4. SHA-256 HASH COMPUTATION
 async function computeSHA256(file) {
     const buffer = await file.arrayBuffer();
     const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
@@ -152,7 +243,6 @@ async function computeSHA256(file) {
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// 5. ANTI-DUPLICATE CHECK
 async function checkDuplicateHash(sha256) {
     const { data: existingApproved } = await supabase.from('games').select('id').eq('sha256_hash', sha256);
     if (existingApproved && existingApproved.length > 0) return true;
@@ -163,7 +253,6 @@ async function checkDuplicateHash(sha256) {
     return false;
 }
 
-// 6. PUBLICATION FORM SUBMISSION
 document.getElementById('publishForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const submitBtn = document.getElementById('submitGameBtn');
@@ -180,7 +269,6 @@ document.getElementById('publishForm').addEventListener('submit', async (e) => {
 
         if (!thumbFile) throw new Error("Miniature obligatoire.");
 
-        // Upload Miniature
         const thumbPath = `thumbs/${Date.now()}_${thumbFile.name}`;
         const { error: thumbErr } = await supabase.storage.from('thumbnails').upload(thumbPath, thumbFile);
         if (thumbErr) throw new Error("Échec upload image.");
@@ -237,7 +325,7 @@ document.getElementById('publishForm').addEventListener('submit', async (e) => {
         if (insertErr) throw insertErr;
 
         showToast("Demande de publication envoyée avec succès !");
-        publishModal.classList.remove('active');
+        document.getElementById('publishModal').classList.remove('active');
         document.getElementById('publishForm').reset();
 
     } catch (err) {
@@ -248,80 +336,6 @@ document.getElementById('publishForm').addEventListener('submit', async (e) => {
     }
 });
 
-// 7. LISTENERS ET NAVIGATION
-function setupEventListeners() {
-    // Filtres
-    document.querySelectorAll('.cat-chip').forEach(chip => {
-        chip.addEventListener('click', (e) => {
-            document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
-            e.target.classList.add('active');
-            currentCategoryFilter = e.target.dataset.category;
-            fetchApprovedGames();
-        });
-    });
-
-    // Recherche
-    searchInput.addEventListener('input', (e) => {
-        currentSearchTerm = e.target.value;
-        fetchApprovedGames();
-    });
-
-    // Modale Publier
-    document.getElementById('publishBtn').onclick = () => {
-        checkStorageCapacityAndAdjustForm();
-        publishModal.classList.add('active');
-    };
-    document.getElementById('closePublish').onclick = () => publishModal.classList.remove('active');
-
-    // Modale Paramètres
-    document.getElementById('settingsBtn').onclick = () => settingsModal.classList.add('active');
-    document.getElementById('closeSettings').onclick = () => settingsModal.classList.remove('active');
-
-    // Menu Caché
-    document.getElementById('learnMoreBtn').onclick = () => {
-        document.getElementById('learnMoreSection').classList.toggle('show');
-    };
-
-    document.getElementById('devNavBtn').onclick = () => {
-        settingsModal.classList.remove('active');
-        adminModal.classList.add('active');
-    };
-    document.getElementById('closeAdmin').onclick = () => adminModal.classList.remove('active');
-
-    // Onglets Admin
-    document.querySelectorAll('.admin-tab').forEach(tab => {
-        tab.addEventListener('click', (e) => {
-            document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            
-            e.target.classList.add('active');
-            document.getElementById(e.target.dataset.tab).classList.add('active');
-        });
-    });
-
-    // Authentification Admin
-    document.getElementById('adminLoginForm').onsubmit = async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('adminEmail').value;
-        const password = document.getElementById('adminPassword').value;
-
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) {
-            showToast("Identifiants administration invalides", true);
-        } else {
-            showToast("Connexion Meta Service réussie");
-            loadAdminDashboard();
-        }
-    };
-
-    document.getElementById('adminLogoutBtn').onclick = async () => {
-        await supabase.auth.signOut();
-        document.getElementById('adminAuthSection').classList.remove('hidden');
-        document.getElementById('adminDashboardSection').classList.add('hidden');
-    };
-}
-
-// 8. DASHBOARD ADMIN
 async function loadAdminDashboard() {
     document.getElementById('adminAuthSection').classList.add('hidden');
     document.getElementById('adminDashboardSection').classList.remove('hidden');
@@ -439,7 +453,7 @@ async function renderApprovedAdminList() {
 }
 
 window.deleteApprovedGame = async function(gameId) {
-    if (!confirm("Voulez-vous supprimer définitivement ce jeu (fichiers, images et données) ?")) return;
+    if (!confirm("Voulez-vous supprimer définitivement ce jeu ?")) return;
 
     const { data: game } = await supabase.from('games').select('*').eq('id', gameId).single();
     if (!game) return;
@@ -508,6 +522,7 @@ async function renderLogs() {
 
 function showToast(message, isError = false) {
     const toast = document.getElementById('toast');
+    if (!toast) return;
     toast.innerText = message;
     toast.style.borderColor = isError ? 'var(--danger)' : 'var(--accent)';
     toast.classList.remove('hidden');
