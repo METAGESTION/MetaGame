@@ -140,6 +140,11 @@ body {
     cursor: pointer;
     text-decoration: underline;
     padding: 0;
+    font-size: 0.9rem;
+}
+
+.btn-link:hover {
+    color: var(--accent);
 }
 
 .categories-bar {
@@ -305,7 +310,54 @@ body {
     padding: 1.5rem;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 1.2rem;
+}
+
+.settings-section {
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.settings-section:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.settings-section h3 {
+    font-size: 1rem;
+    color: var(--text-main);
+}
+
+.info-text {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+.custom-text-area {
+    min-height: 120px;
+    padding: 1rem;
+    background-color: var(--bg-card);
+    border: 1px dashed var(--border-color);
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+    color: var(--text-main);
+    line-height: 1.5;
+}
+
+.separator {
+    border: none;
+    border-top: 1px solid var(--border-color);
+    margin: 0.5rem 0;
+}
+
+.dev-access-wrapper {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 0.5rem;
 }
 
 .form-group {
@@ -334,17 +386,6 @@ body {
 
 .hidden {
     display: none !important;
-}
-
-.hidden-section {
-    display: none;
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--border-color);
-}
-
-.hidden-section.show {
-    display: block;
 }
 
 .admin-tabs {
