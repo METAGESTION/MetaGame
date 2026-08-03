@@ -13,22 +13,25 @@
     --transition: all 0.25s ease-in-out;
 }
 
-* {
+*,
+*::before,
+*::after {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 body {
     background-color: var(--bg-dark);
     color: var(--text-main);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     position: relative;
 }
 
+/* --- Navigation --- */
 .navbar {
     display: flex;
     justify-content: space-between;
@@ -85,6 +88,7 @@ body {
     gap: 1rem;
 }
 
+/* --- Boutons --- */
 .btn {
     padding: 0.6rem 1.2rem;
     border-radius: var(--radius);
@@ -147,6 +151,7 @@ body {
     color: var(--accent);
 }
 
+/* --- Catégories --- */
 .categories-bar {
     display: flex;
     gap: 0.5rem;
@@ -173,6 +178,7 @@ body {
     border-color: var(--primary);
 }
 
+/* --- Layout & Grille --- */
 .container {
     padding: 2rem;
     flex: 1;
@@ -250,6 +256,7 @@ body {
     width: 100%;
 }
 
+/* --- Fenêtres Modales --- */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -397,6 +404,7 @@ body {
     display: none !important;
 }
 
+/* --- Administration & Composants --- */
 .admin-tabs {
     display: flex;
     gap: 0.5rem;
@@ -512,6 +520,7 @@ body {
     z-index: 900;
 }
 
+/* --- Adaptabilité Mobile --- */
 @media (max-width: 768px) {
     .navbar {
         flex-direction: column;
