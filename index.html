@@ -21,8 +21,8 @@
             </div>
         </div>
         <div class="nav-right">
-            <button id="publishBtn" class="btn btn-primary">Publier</button>
-            <button id="settingsBtn" class="btn btn-secondary">Paramètres</button>
+            <button id="publishBtn" class="btn btn-primary" type="button">Publier</button>
+            <button id="settingsBtn" class="btn btn-secondary" type="button">Paramètres</button>
         </div>
     </header>
 
@@ -118,11 +118,11 @@
             <div class="modal-body">
                 <p>GameHub v1.0.1 - Plateforme Web3-Ready HTML5</p>
                 <div class="settings-nav">
-                    <button class="btn btn-secondary" id="learnMoreBtn">En savoir plus</button>
+                    <button class="btn btn-secondary" id="learnMoreBtn" type="button">En savoir plus</button>
                 </div>
                 <div id="learnMoreSection" class="hidden-section">
                     <p class="info-text">GameHub héberge des jeux HTML5 légers et vérifiés par hachage SHA-256 anti-doublon.</p>
-                    <button class="btn btn-link" id="devNavBtn">Je suis développeur</button>
+                    <button class="btn btn-link" id="devNavBtn" type="button">Je suis développeur</button>
                 </div>
             </div>
         </div>
@@ -158,21 +158,17 @@
                         <button class="admin-tab" data-tab="tabApproved">Jeux Acceptés</button>
                         <button class="admin-tab" data-tab="tabStorage">Stockage & Stats</button>
                         <button class="admin-tab" data-tab="tabLogs">Journal</button>
-                        <button class="btn btn-secondary btn-sm" id="adminLogoutBtn">Déconnexion</button>
+                        <button class="btn btn-secondary btn-sm" id="adminLogoutBtn" type="button">Déconnexion</button>
                     </div>
 
                     <!-- Onglet 1: Demandes -->
                     <div class="tab-content active" id="tabRequests">
-                        <div class="pending-list" id="pendingListContainer">
-                            <!-- Rempli en JS -->
-                        </div>
+                        <div class="pending-list" id="pendingListContainer"></div>
                     </div>
 
                     <!-- Onglet 2: Jeux Acceptés -->
                     <div class="tab-content" id="tabApproved">
-                        <div class="approved-list" id="approvedListContainer">
-                            <!-- Rempli en JS -->
-                        </div>
+                        <div class="approved-list" id="approvedListContainer"></div>
                     </div>
 
                     <!-- Onglet 3: Stockage -->
@@ -200,9 +196,7 @@
 
                     <!-- Onglet 4: Journal -->
                     <div class="tab-content" id="tabLogs">
-                        <ul class="logs-list" id="logsContainer">
-                            <!-- Logs affichés dynamiquement -->
-                        </ul>
+                        <ul class="logs-list" id="logsContainer"></ul>
                     </div>
                 </div>
             </div>
