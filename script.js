@@ -1,15 +1,9 @@
-// CONFIGURATION SUPABASE (Remplacez par vos vraies clés quand vous serez prêt)
-const SUPABASE_URL = "https://YOUR-SUPABASE-URL.supabase.co";
-const SUPABASE_ANON_KEY = "YOUR-SUPABASE-ANON-KEY";
+// CONFIGURATION SUPABASE OFFICIELLE
+const SUPABASE_URL = "https://ygvttaydgenzdmbsykfn.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_AzhjMaP1tzKYdyz01Tcmig_cUk44aNL";
 
-// Vérification de la validité de la configuration Supabase
-const isSupabaseConfigured = () => {
-    return window.supabase 
-        && SUPABASE_URL !== "https://YOUR-SUPABASE-URL.supabase.co" 
-        && SUPABASE_ANON_KEY !== "YOUR-SUPABASE-ANON-KEY";
-};
-
-const supabase = isSupabaseConfigured() 
+// Initialisation du client Supabase
+const supabase = window.supabase 
     ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) 
     : null;
 
@@ -19,14 +13,14 @@ const ADMIN_CREDENTIALS = {
     password: "GameHub2026!"
 };
 
-const STORAGE_LIMIT_BYTES = 700 * 1024 * 1024;
-const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;
+const STORAGE_LIMIT_BYTES = 700 * 1024 * 1024; // 700 Mo
+const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;  // 20 Mo
 
 let currentCategoryFilter = 'ALL';
 let currentSearchTerm = '';
 let currentTotalStorageBytes = 0;
 
-// Exécution garantie dès que le DOM est prêt
+// Exécution au chargement du DOM
 document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     initApp();
@@ -34,51 +28,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function initApp() {
     if (!supabase) {
-        console.warn("GameHub: Supabase n'est pas configuré. Mode démonstration local actif.");
+        console.error("GameHub : Impossible d'initialiser Supabase.");
         return;
     }
     try {
         await checkStorageCapacityAndAdjustForm();
         await fetchApprovedGames();
     } catch (err) {
-        console.error("Erreur lors de l'initialisation de Supabase :", err);
+        console.error("Erreur d'initialisation :", err);
     }
 }
 
 function setupEventListeners() {
-    // 1. GESTION DES MODALES
-    const modalPairs = [
-        { btnId: 'publishBtn', modalId: 'publishModal', closeId: 'closePublish', action: () => checkStorageCapacityAndAdjustForm() },
-        { btnId: 'settingsBtn', modalId: 'settingsModal', closeId: 'closeSettings' },
-        { btnId: 'closeMoreInfo', modalId: 'moreInfoModal', action: 'close' },
-        { btnId: 'closeAdmin', modalId: 'adminModal', action: 'close' }
+    // 1. GESTION DES MODALES (Ouverture / Fermeture)
+    const modalConfig = [
+        { btnId: 'publishBtn', modalId: 'publishModal', action: () => checkStorageCapacityAndAdjustForm() },
+        { btnId: 'settingsBtn', modalId: 'settingsModal' },
+        { btnId: 'closePublish', modalId: 'publishModal', isClose: true },
+        { btnId: 'closeSettings', modalId: 'settingsModal', isClose: true },
+        { btnId: 'closeMoreInfo', modalId: 'moreInfoModal', isClose: true },
+        { btnId: 'closeAdmin', modalId: 'adminModal', isClose: true }
     ];
 
-    // Attachement des ouvertures/fermetures de modales de base
-    modalPairs.forEach(pair => {
-        const btn = document.getElementById(pair.btnId);
-        const modal = document.getElementById(pair.modalId);
-
+    modalConfig.forEach(cfg => {
+        const btn = document.getElementById(cfg.btnId);
+        const modal = document.getElementById(cfg.modalId);
         if (btn && modal) {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
-                if (pair.action === 'close') {
+                if (cfg.isClose) {
                     modal.classList.remove('active');
                 } else {
-                    if (typeof pair.action === 'function') pair.action();
+                    if (typeof cfg.action === 'function') cfg.action();
                     modal.classList.add('active');
                 }
             });
         }
     });
 
-    // Gestion spécifique des fermetures
-    const closePublish = document.getElementById('closePublish');
-    const closeSettings = document.getElementById('closeSettings');
-    if (closePublish) closePublish.onclick = () => document.getElementById('publishModal').classList.remove('active');
-    if (closeSettings) closeSettings.onclick = () => document.getElementById('settingsModal').classList.remove('active');
-
-    // Navigation inter-modales
+    // Modales imbriquées
     const moreInfoBtn = document.getElementById('moreInfoBtn');
     if (moreInfoBtn) {
         moreInfoBtn.addEventListener('click', () => {
@@ -99,10 +87,10 @@ function setupEventListeners() {
     const clearDataBtn = document.getElementById('clearDataBtn');
     if (clearDataBtn) {
         clearDataBtn.addEventListener('click', () => {
-            if (confirm("Voulez-vous vraiment effacer les données locales stockées par votre navigateur ?")) {
+            if (confirm("Voulez-vous effacer le stockage temporaire du navigateur ?")) {
                 localStorage.clear();
                 sessionStorage.clear();
-                showToast("Données de sauvegarde du navigateur effacées.");
+                showToast("Cache local nettoyé avec succès.");
             }
         });
     }
@@ -116,10 +104,10 @@ function setupEventListeners() {
             const passIn = document.getElementById('adminPassword').value.trim();
 
             if (userIn === ADMIN_CREDENTIALS.username && passIn === ADMIN_CREDENTIALS.password) {
-                showToast("Connexion au Panneau de Gestion réussie.");
+                showToast("Connexion réussie.");
                 loadAdminDashboard();
             } else {
-                showToast("Nom d'utilisateur ou mot de passe incorrect.", true);
+                showToast("Identifiants incorrects.", true);
             }
         });
     }
@@ -152,9 +140,10 @@ function setupEventListeners() {
         });
     }
 
-    // 5. ONGLETS ADMIN
+    // 5. ONGLETS ADMINISTRATION
     document.querySelectorAll('.admin-tab').forEach(tab => {
         tab.addEventListener('click', (e) => {
+            if (e.target.id === 'adminLogoutBtn') return;
             document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             
@@ -165,7 +154,7 @@ function setupEventListeners() {
         });
     });
 
-    // 6. FORMULAIRE DE PUBLICATION
+    // 6. SOUMISSION DU FORMULAIRE DE PUBLICATION
     const publishForm = document.getElementById('publishForm');
     if (publishForm) {
         publishForm.addEventListener('submit', handlePublishSubmit);
@@ -184,7 +173,7 @@ async function calculateStorageMetrics() {
         currentTotalStorageBytes = approvedSize;
         return { approvedSize, pendingSize, countApproved: approved?.length || 0, countPending: pending?.length || 0 };
     } catch (e) {
-        console.error("Erreur calcul stockage:", e);
+        console.error("Erreur de calcul du stockage :", e);
         return { approvedSize: 0, pendingSize: 0, countApproved: 0, countPending: 0 };
     }
 }
@@ -223,7 +212,7 @@ async function fetchApprovedGames() {
         const { data: games, error } = await query;
 
         if (error) {
-            showToast("Erreur lors du chargement des jeux", true);
+            showToast("Erreur de chargement des jeux.", true);
             return;
         }
 
@@ -236,7 +225,7 @@ async function fetchApprovedGames() {
 
         renderGames(filtered);
     } catch (e) {
-        console.error("Erreur chargement jeux:", e);
+        console.error("Erreur de récupération des jeux :", e);
     }
 }
 
@@ -247,7 +236,7 @@ function renderGames(games) {
     gamesGrid.innerHTML = '';
 
     if (!games || games.length === 0) {
-        gamesGrid.innerHTML = `<p class="help-text">Aucun jeu ne correspond à votre recherche.</p>`;
+        gamesGrid.innerHTML = `<p class="help-text">Aucun jeu disponible.</p>`;
         return;
     }
 
@@ -268,11 +257,11 @@ function renderGames(games) {
                 <div class="card-title">${escapeHtml(game.title)}</div>
                 <div class="card-author">Par ${escapeHtml(game.author_name)} (${game.category})</div>
                 <div class="card-meta">
-                    <span>Taille: ${game.type === 'file' ? sizeInMb + ' Mo' : 'Lien Ext.'}</span>
+                    <span>${game.type === 'file' ? sizeInMb + ' Mo' : 'Lien Ext.'}</span>
                     <span>Téléchargements: ${game.downloads_count || 0}</span>
                 </div>
                 <div class="card-actions">
-                    <a href="${playUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-primary play-btn">Jouer</a>
+                    <a href="${playUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-primary">Jouer</a>
                 </div>
             </div>
         `;
@@ -298,14 +287,11 @@ async function checkDuplicateHash(sha256) {
 
 async function handlePublishSubmit(e) {
     e.preventDefault();
-    if (!supabase) {
-        showToast("Veuillez configurer Supabase dans script.js pour publier.", true);
-        return;
-    }
+    if (!supabase) return;
 
     const submitBtn = document.getElementById('submitGameBtn');
     submitBtn.disabled = true;
-    submitBtn.innerText = "Traitement en cours...";
+    submitBtn.innerText = "Upload en cours...";
 
     try {
         const authorName = document.getElementById('authorName').value.trim();
@@ -317,13 +303,13 @@ async function handlePublishSubmit(e) {
 
         if (!thumbFile) throw new Error("Miniature obligatoire.");
 
+        // Upload de l'image de miniature
         const thumbPath = `thumbs/${Date.now()}_${thumbFile.name}`;
         const { error: thumbErr } = await supabase.storage.from('thumbnails').upload(thumbPath, thumbFile);
-        if (thumbErr) throw new Error("Échec de l'upload de l'image.");
+        if (thumbErr) throw new Error("Erreur lors de l'envoi de la miniature.");
         const thumbUrl = supabase.storage.from('thumbnails').getPublicUrl(thumbPath).data.publicUrl;
 
         const isFileMode = currentTotalStorageBytes < STORAGE_LIMIT_BYTES;
-
         let filePath = null;
         let externalUrl = null;
         let fileSizeBytes = 0;
@@ -332,15 +318,15 @@ async function handlePublishSubmit(e) {
         if (isFileMode) {
             const gameFile = document.getElementById('gameFile').files[0];
             if (!gameFile) throw new Error("Fichier HTML requis.");
-            if (!gameFile.name.endsWith('.html')) throw new Error("Seuls les fichiers .html sont acceptés.");
-            if (gameFile.size > MAX_FILE_SIZE_BYTES) throw new Error("Le fichier dépasse la taille maximale autorisée (20 Mo).");
+            if (!gameFile.name.endsWith('.html')) throw new Error("Seuls les fichiers .html sont autorisés.");
+            if (gameFile.size > MAX_FILE_SIZE_BYTES) throw new Error("Taille maximale dépassée (20 Mo).");
 
             fileSizeBytes = gameFile.size;
             sha256Hash = await computeSHA256(gameFile);
 
             const isDuplicate = await checkDuplicateHash(sha256Hash);
             if (isDuplicate) {
-                showToast("Ce jeu existe déjà sur la plateforme.", true);
+                showToast("Ce jeu a déjà été soumis sur la plateforme.", true);
                 submitBtn.disabled = false;
                 submitBtn.innerText = "Envoyer pour Validation";
                 return;
@@ -348,11 +334,11 @@ async function handlePublishSubmit(e) {
 
             filePath = `games_html/${Date.now()}_${gameFile.name}`;
             const { error: fileErr } = await supabase.storage.from('games').upload(filePath, gameFile);
-            if (fileErr) throw new Error("Échec de l'upload du fichier HTML.");
+            if (fileErr) throw new Error("Erreur lors de l'envoi du fichier du jeu.");
 
         } else {
             externalUrl = document.getElementById('gameLink').value.trim();
-            if (!externalUrl) throw new Error("Lien externe requis.");
+            if (!externalUrl) throw new Error("URL valide requise.");
         }
 
         const { error: insertErr } = await supabase.from('pending_games').insert([{
@@ -372,7 +358,7 @@ async function handlePublishSubmit(e) {
 
         if (insertErr) throw insertErr;
 
-        showToast("Demande de publication envoyée avec succès !");
+        showToast("Publication soumise avec succès !");
         document.getElementById('publishModal').classList.remove('active');
         document.getElementById('publishForm').reset();
 
@@ -396,12 +382,7 @@ async function loadAdminDashboard() {
 
 async function renderPendingRequests() {
     const container = document.getElementById('pendingListContainer');
-    if (!container) return;
-
-    if (!supabase) {
-        container.innerHTML = '<p class="help-text">Supabase non configuré.</p>';
-        return;
-    }
+    if (!container || !supabase) return;
 
     const { data: requests } = await supabase.from('pending_games').select('*').eq('status', 'pending');
     document.getElementById('pendingCountBadge').innerText = requests ? requests.length : 0;
@@ -421,16 +402,15 @@ async function renderPendingRequests() {
             : req.external_url;
 
         div.innerHTML = `
-            <img src="${req.image_url}" class="admin-item-img" alt="Aperçu ${escapeHtml(req.title)}">
+            <img src="${req.image_url}" class="admin-item-img" alt="${escapeHtml(req.title)}">
             <div class="admin-item-details">
                 <h4>${escapeHtml(req.title)} (${req.category})</h4>
                 <p><small>Auteur: ${escapeHtml(req.author_name)} (${escapeHtml(req.author_email)})</small></p>
-                <p><small>Taille: ${req.type === 'file' ? sizeMb + ' Mo' : 'Lien Ext.'} | Date: ${new Date(req.created_at).toLocaleDateString()}</small></p>
-                <p><small>${escapeHtml(req.description)}</small></p>
+                <p><small>Taille: ${req.type === 'file' ? sizeMb + ' Mo' : 'Lien Ext.'}</small></p>
             </div>
             <div class="admin-item-actions">
-                <a href="${openUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">Ouvrir</a>
-                <button type="button" class="btn btn-primary btn-sm" onclick="approveGame('${req.id}')">Autoriser</button>
+                <a href="${openUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">Tester</a>
+                <button type="button" class="btn btn-primary btn-sm" onclick="approveGame('${req.id}')">Valider</button>
                 <button type="button" class="btn btn-danger btn-sm" onclick="rejectGame('${req.id}')">Refuser</button>
             </div>
         `;
@@ -458,14 +438,14 @@ window.approveGame = async function(requestId) {
     }]);
 
     if (insErr) {
-        showToast("Erreur lors de l'approbation", true);
+        showToast("Erreur d'approbation", true);
         return;
     }
 
     await supabase.from('pending_games').update({ status: 'approved' }).eq('id', requestId);
-    await logAdminAction('AUTORISER_JEU', requestId, `Jeu approuvé: ${req.title}`);
+    await logAdminAction('AUTORISER_JEU', requestId, `Approuvé: ${req.title}`);
 
-    showToast("Jeu approuvé et rendu public !");
+    showToast("Jeu validé et publié !");
     loadAdminDashboard();
     fetchApprovedGames();
 };
@@ -476,7 +456,7 @@ window.rejectGame = async function(requestId) {
     if (!req) return;
 
     await supabase.from('pending_games').update({ status: 'rejected' }).eq('id', requestId);
-    await logAdminAction('REFUSER_JEU', requestId, `Demande refusée: ${req.title}`);
+    await logAdminAction('REFUSER_JEU', requestId, `Refusé: ${req.title}`);
 
     showToast("Demande refusée.");
     loadAdminDashboard();
@@ -484,12 +464,7 @@ window.rejectGame = async function(requestId) {
 
 async function renderApprovedAdminList() {
     const container = document.getElementById('approvedListContainer');
-    if (!container) return;
-
-    if (!supabase) {
-        container.innerHTML = '<p class="help-text">Supabase non configuré.</p>';
-        return;
-    }
+    if (!container || !supabase) return;
 
     const { data: games } = await supabase.from('games').select('*').order('created_at', { ascending: false });
     container.innerHTML = '';
@@ -503,13 +478,13 @@ async function renderApprovedAdminList() {
         const div = document.createElement('div');
         div.className = 'admin-item-card';
         div.innerHTML = `
-            <img src="${game.image_url}" class="admin-item-img" alt="Aperçu ${escapeHtml(game.title)}">
+            <img src="${game.image_url}" class="admin-item-img" alt="${escapeHtml(game.title)}">
             <div class="admin-item-details">
                 <h4>${escapeHtml(game.title)}</h4>
                 <p><small>Auteur: ${escapeHtml(game.author_name)}</small></p>
             </div>
             <div class="admin-item-actions">
-                <button type="button" class="btn btn-danger btn-sm" onclick="deleteApprovedGame('${game.id}')">Supprimer Définitivement</button>
+                <button type="button" class="btn btn-danger btn-sm" onclick="deleteApprovedGame('${game.id}')">Supprimer</button>
             </div>
         `;
         container.appendChild(div);
@@ -517,8 +492,7 @@ async function renderApprovedAdminList() {
 }
 
 window.deleteApprovedGame = async function(gameId) {
-    if (!supabase) return;
-    if (!confirm("Voulez-vous supprimer définitivement ce jeu ?")) return;
+    if (!supabase || !confirm("Confirmer la suppression définitive ?")) return;
 
     const { data: game } = await supabase.from('games').select('*').eq('id', gameId).single();
     if (!game) return;
@@ -526,16 +500,11 @@ window.deleteApprovedGame = async function(gameId) {
     if (game.type === 'file' && game.file_path) {
         await supabase.storage.from('games').remove([game.file_path]);
     }
-    if (game.image_url) {
-        const urlParts = game.image_url.split('/');
-        const thumbFileName = urlParts[urlParts.length - 1];
-        await supabase.storage.from('thumbnails').remove([`thumbs/${thumbFileName}`]);
-    }
 
     await supabase.from('games').delete().eq('id', gameId);
-    await logAdminAction('SUPPRIMER_JEU', gameId, `Jeu et assets supprimés: ${game.title}`);
+    await logAdminAction('SUPPRIMER_JEU', gameId, `Supprimé: ${game.title}`);
 
-    showToast("Jeu définitivement supprimé.");
+    showToast("Jeu supprimé.");
     loadAdminDashboard();
     fetchApprovedGames();
 };
@@ -562,28 +531,18 @@ async function renderStorageAndStats() {
 
 async function logAdminAction(action, targetId, details) {
     if (!supabase) return;
-    await supabase.from('admin_logs').insert([{
-        admin_id: null,
-        action,
-        target_id: targetId,
-        details
-    }]);
+    await supabase.from('admin_logs').insert([{ action, target_id: targetId, details }]);
 }
 
 async function renderLogs() {
     const container = document.getElementById('logsContainer');
-    if (!container) return;
-
-    if (!supabase) {
-        container.innerHTML = '<li>Supabase non configuré.</li>';
-        return;
-    }
+    if (!container || !supabase) return;
 
     const { data: logs } = await supabase.from('admin_logs').select('*').order('created_at', { ascending: false }).limit(50);
     container.innerHTML = '';
 
     if (!logs || logs.length === 0) {
-        container.innerHTML = '<li>Aucun log disponible.</li>';
+        container.innerHTML = '<li>Aucun log système.</li>';
         return;
     }
 
