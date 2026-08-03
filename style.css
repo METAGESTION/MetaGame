@@ -56,7 +56,7 @@ body {
     font-weight: 700;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.2rem;
     cursor: pointer;
 }
 
@@ -101,7 +101,6 @@ body {
     justify-content: center;
     gap: 0.5rem;
     text-decoration: none;
-    pointer-events: auto;
 }
 
 .btn-primary {
@@ -340,19 +339,8 @@ body {
     padding-bottom: 0;
 }
 
-.settings-section h3 {
-    font-size: 1rem;
-    color: var(--text-main);
-}
-
-.info-text {
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    line-height: 1.4;
-}
-
 .custom-text-area {
-    min-height: 120px;
+    min-height: 100px;
     padding: 1rem;
     background-color: var(--bg-card);
     border: 1px dashed var(--border-color);
@@ -371,7 +359,6 @@ body {
 .dev-access-wrapper {
     display: flex;
     justify-content: flex-end;
-    padding-top: 0.5rem;
 }
 
 .form-group {
@@ -396,7 +383,7 @@ body {
 }
 
 .help-text {
-    font-size: 0.75rem;
+    font-size: 0.85rem;
     color: var(--text-muted);
 }
 
@@ -404,13 +391,14 @@ body {
     display: none !important;
 }
 
-/* --- Administration & Composants --- */
+/* --- Panneau Admin --- */
 .admin-tabs {
     display: flex;
     gap: 0.5rem;
     border-bottom: 1px solid var(--border-color);
     padding-bottom: 0.5rem;
     margin-bottom: 1rem;
+    flex-wrap: wrap;
 }
 
 .admin-tab {
@@ -498,7 +486,7 @@ body {
     bottom: 20px;
     right: 20px;
     background-color: var(--bg-surface);
-    border: 1px solid var(--primary);
+    border: 1px solid var(--accent);
     padding: 1rem 1.5rem;
     border-radius: var(--radius);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
