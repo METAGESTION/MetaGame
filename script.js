@@ -2,10 +2,15 @@
 const SUPABASE_URL = "https://ygvttaydgenzdmbsykfn.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_AzhjMaP1tzKYdyz01Tcmig_cUk44aNL";
 
-// Initialisation du client Supabase
-const supabase = window.supabase 
-    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) 
-    : null;
+// Initialisation sécurisée du client Supabase
+let supabase = null;
+try {
+    if (window.supabase && typeof window.supabase.createClient === 'function') {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+} catch (err) {
+    console.warn("Initialisation Supabase reportée :", err);
+}
 
 // IDENTIFIANTS ADMINISTRATION
 const ADMIN_CREDENTIALS = {
@@ -20,7 +25,7 @@ let currentCategoryFilter = 'ALL';
 let currentSearchTerm = '';
 let currentTotalStorageBytes = 0;
 
-// Exécution au chargement du DOM
+// Exécution sécurisée au chargement du DOM
 document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     initApp();
@@ -28,7 +33,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function initApp() {
     if (!supabase) {
-        console.error("GameHub : Impossible d'initialiser Supabase.");
+        console.warn("GameHub : Client Supabase non actif. Vérifiez la connexion.");
+        renderGames([]);
         return;
     }
     try {
@@ -69,24 +75,27 @@ function setupEventListeners() {
     // Modales imbriquées
     const moreInfoBtn = document.getElementById('moreInfoBtn');
     if (moreInfoBtn) {
-        moreInfoBtn.addEventListener('click', () => {
-            document.getElementById('settingsModal').classList.remove('active');
-            document.getElementById('moreInfoModal').classList.add('active');
+        moreInfoBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('settingsModal')?.classList.remove('active');
+            document.getElementById('moreInfoModal')?.classList.add('active');
         });
     }
 
     const devNavBtn = document.getElementById('devNavBtn');
     if (devNavBtn) {
-        devNavBtn.addEventListener('click', () => {
-            document.getElementById('moreInfoModal').classList.remove('active');
-            document.getElementById('adminModal').classList.add('active');
+        devNavBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('moreInfoModal')?.classList.remove('active');
+            document.getElementById('adminModal')?.classList.add('active');
         });
     }
 
     // 2. NETTOYAGE DU CACHE LOCAL
     const clearDataBtn = document.getElementById('clearDataBtn');
     if (clearDataBtn) {
-        clearDataBtn.addEventListener('click', () => {
+        clearDataBtn.addEventListener('click', (e) => {
+            e.preventDefault();
             if (confirm("Voulez-vous effacer le stockage temporaire du navigateur ?")) {
                 localStorage.clear();
                 sessionStorage.clear();
@@ -114,10 +123,11 @@ function setupEventListeners() {
 
     const adminLogoutBtn = document.getElementById('adminLogoutBtn');
     if (adminLogoutBtn) {
-        adminLogoutBtn.addEventListener('click', () => {
-            document.getElementById('adminAuthSection').classList.remove('hidden');
-            document.getElementById('adminDashboardSection').classList.add('hidden');
-            document.getElementById('adminLoginForm').reset();
+        adminLogoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('adminAuthSection')?.classList.remove('hidden');
+            document.getElementById('adminDashboardSection')?.classList.add('hidden');
+            document.getElementById('adminLoginForm')?.reset();
             showToast("Déconnexion effectuée.");
         });
     }
@@ -126,8 +136,9 @@ function setupEventListeners() {
     document.querySelectorAll('.cat-chip').forEach(chip => {
         chip.addEventListener('click', (e) => {
             document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
-            e.target.classList.add('active');
-            currentCategoryFilter = e.target.dataset.category;
+            const target = e.currentTarget;
+            target.classList.add('active');
+            currentCategoryFilter = target.dataset.category || 'ALL';
             fetchApprovedGames();
         });
     });
@@ -147,8 +158,9 @@ function setupEventListeners() {
             document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             
-            e.target.classList.add('active');
-            const targetId = e.target.dataset.tab;
+            const target = e.currentTarget;
+            target.classList.add('active');
+            const targetId = target.dataset.tab;
             const targetContent = document.getElementById(targetId);
             if (targetContent) targetContent.classList.add('active');
         });
@@ -201,7 +213,10 @@ async function checkStorageCapacityAndAdjustForm() {
 }
 
 async function fetchApprovedGames() {
-    if (!supabase) return;
+    if (!supabase) {
+        renderGames([]);
+        return;
+    }
     try {
         let query = supabase.from('games').select('*').order('created_at', { ascending: false });
 
@@ -218,14 +233,15 @@ async function fetchApprovedGames() {
 
         const filtered = games ? games.filter(game => {
             const term = currentSearchTerm.toLowerCase();
-            return game.title.toLowerCase().includes(term) ||
-                   game.author_name.toLowerCase().includes(term) ||
-                   game.category.toLowerCase().includes(term);
+            return (game.title && game.title.toLowerCase().includes(term)) ||
+                   (game.author_name && game.author_name.toLowerCase().includes(term)) ||
+                   (game.category && game.category.toLowerCase().includes(term));
         }) : [];
 
         renderGames(filtered);
     } catch (e) {
         console.error("Erreur de récupération des jeux :", e);
+        renderGames([]);
     }
 }
 
@@ -236,7 +252,7 @@ function renderGames(games) {
     gamesGrid.innerHTML = '';
 
     if (!games || games.length === 0) {
-        gamesGrid.innerHTML = `<p class="help-text">Aucun jeu disponible.</p>`;
+        gamesGrid.innerHTML = `<p class="help-text">Aucun jeu disponible pour le moment.</p>`;
         return;
     }
 
@@ -244,18 +260,18 @@ function renderGames(games) {
         const card = document.createElement('div');
         card.className = 'game-card';
 
-        const sizeInMb = (game.file_size_bytes / (1024 * 1024)).toFixed(1);
-        const playUrl = game.type === 'file' 
+        const sizeInMb = ((game.file_size_bytes || 0) / (1024 * 1024)).toFixed(1);
+        const playUrl = (game.type === 'file' && supabase)
             ? supabase.storage.from('games').getPublicUrl(game.file_path).data.publicUrl
-            : game.external_url;
+            : (game.external_url || '#');
 
         card.innerHTML = `
             <div class="card-img-wrapper">
-                <img src="${game.image_url}" alt="${escapeHtml(game.title)}" loading="lazy">
+                <img src="${game.image_url || ''}" alt="${escapeHtml(game.title || '')}" loading="lazy">
             </div>
             <div class="card-content">
-                <div class="card-title">${escapeHtml(game.title)}</div>
-                <div class="card-author">Par ${escapeHtml(game.author_name)} (${game.category})</div>
+                <div class="card-title">${escapeHtml(game.title || 'Sans titre')}</div>
+                <div class="card-author">Par ${escapeHtml(game.author_name || 'Anonyme')} (${escapeHtml(game.category || 'Autre')})</div>
                 <div class="card-meta">
                     <span>${game.type === 'file' ? sizeInMb + ' Mo' : 'Lien Ext.'}</span>
                     <span>Téléchargements: ${game.downloads_count || 0}</span>
@@ -287,7 +303,10 @@ async function checkDuplicateHash(sha256) {
 
 async function handlePublishSubmit(e) {
     e.preventDefault();
-    if (!supabase) return;
+    if (!supabase) {
+        showToast("Impossible de publier : Supabase non disponible.", true);
+        return;
+    }
 
     const submitBtn = document.getElementById('submitGameBtn');
     submitBtn.disabled = true;
@@ -303,7 +322,6 @@ async function handlePublishSubmit(e) {
 
         if (!thumbFile) throw new Error("Miniature obligatoire.");
 
-        // Upload de l'image de miniature
         const thumbPath = `thumbs/${Date.now()}_${thumbFile.name}`;
         const { error: thumbErr } = await supabase.storage.from('thumbnails').upload(thumbPath, thumbFile);
         if (thumbErr) throw new Error("Erreur lors de l'envoi de la miniature.");
@@ -371,8 +389,8 @@ async function handlePublishSubmit(e) {
 }
 
 async function loadAdminDashboard() {
-    document.getElementById('adminAuthSection').classList.add('hidden');
-    document.getElementById('adminDashboardSection').classList.remove('hidden');
+    document.getElementById('adminAuthSection')?.classList.add('hidden');
+    document.getElementById('adminDashboardSection')?.classList.remove('hidden');
 
     await renderPendingRequests();
     await renderApprovedAdminList();
@@ -385,7 +403,8 @@ async function renderPendingRequests() {
     if (!container || !supabase) return;
 
     const { data: requests } = await supabase.from('pending_games').select('*').eq('status', 'pending');
-    document.getElementById('pendingCountBadge').innerText = requests ? requests.length : 0;
+    const badge = document.getElementById('pendingCountBadge');
+    if (badge) badge.innerText = requests ? requests.length : 0;
 
     container.innerHTML = '';
     if (!requests || requests.length === 0) {
@@ -396,7 +415,7 @@ async function renderPendingRequests() {
     requests.forEach(req => {
         const div = document.createElement('div');
         div.className = 'admin-item-card';
-        const sizeMb = (req.file_size_bytes / (1024 * 1024)).toFixed(1);
+        const sizeMb = ((req.file_size_bytes || 0) / (1024 * 1024)).toFixed(1);
         const openUrl = req.type === 'file' 
             ? supabase.storage.from('games').getPublicUrl(req.file_path).data.publicUrl
             : req.external_url;
@@ -404,21 +423,28 @@ async function renderPendingRequests() {
         div.innerHTML = `
             <img src="${req.image_url}" class="admin-item-img" alt="${escapeHtml(req.title)}">
             <div class="admin-item-details">
-                <h4>${escapeHtml(req.title)} (${req.category})</h4>
+                <h4>${escapeHtml(req.title)} (${escapeHtml(req.category)})</h4>
                 <p><small>Auteur: ${escapeHtml(req.author_name)} (${escapeHtml(req.author_email)})</small></p>
                 <p><small>Taille: ${req.type === 'file' ? sizeMb + ' Mo' : 'Lien Ext.'}</small></p>
             </div>
             <div class="admin-item-actions">
                 <a href="${openUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">Tester</a>
-                <button type="button" class="btn btn-primary btn-sm" onclick="approveGame('${req.id}')">Valider</button>
-                <button type="button" class="btn btn-danger btn-sm" onclick="rejectGame('${req.id}')">Refuser</button>
+                <button type="button" class="btn btn-primary btn-sm btn-approve" data-id="${req.id}">Valider</button>
+                <button type="button" class="btn btn-danger btn-sm btn-reject" data-id="${req.id}">Refuser</button>
             </div>
         `;
         container.appendChild(div);
     });
+
+    container.querySelectorAll('.btn-approve').forEach(b => {
+        b.addEventListener('click', () => approveGame(b.dataset.id));
+    });
+    container.querySelectorAll('.btn-reject').forEach(b => {
+        b.addEventListener('click', () => rejectGame(b.dataset.id));
+    });
 }
 
-window.approveGame = async function(requestId) {
+async function approveGame(requestId) {
     if (!supabase) return;
     const { data: req } = await supabase.from('pending_games').select('*').eq('id', requestId).single();
     if (!req) return;
@@ -448,9 +474,9 @@ window.approveGame = async function(requestId) {
     showToast("Jeu validé et publié !");
     loadAdminDashboard();
     fetchApprovedGames();
-};
+}
 
-window.rejectGame = async function(requestId) {
+async function rejectGame(requestId) {
     if (!supabase) return;
     const { data: req } = await supabase.from('pending_games').select('*').eq('id', requestId).single();
     if (!req) return;
@@ -460,7 +486,7 @@ window.rejectGame = async function(requestId) {
 
     showToast("Demande refusée.");
     loadAdminDashboard();
-};
+}
 
 async function renderApprovedAdminList() {
     const container = document.getElementById('approvedListContainer');
@@ -484,14 +510,18 @@ async function renderApprovedAdminList() {
                 <p><small>Auteur: ${escapeHtml(game.author_name)}</small></p>
             </div>
             <div class="admin-item-actions">
-                <button type="button" class="btn btn-danger btn-sm" onclick="deleteApprovedGame('${game.id}')">Supprimer</button>
+                <button type="button" class="btn btn-danger btn-sm btn-delete-game" data-id="${game.id}">Supprimer</button>
             </div>
         `;
         container.appendChild(div);
     });
+
+    container.querySelectorAll('.btn-delete-game').forEach(b => {
+        b.addEventListener('click', () => deleteApprovedGame(b.dataset.id));
+    });
 }
 
-window.deleteApprovedGame = async function(gameId) {
+async function deleteApprovedGame(gameId) {
     if (!supabase || !confirm("Confirmer la suppression définitive ?")) return;
 
     const { data: game } = await supabase.from('games').select('*').eq('id', gameId).single();
@@ -507,7 +537,7 @@ window.deleteApprovedGame = async function(gameId) {
     showToast("Jeu supprimé.");
     loadAdminDashboard();
     fetchApprovedGames();
-};
+}
 
 async function renderStorageAndStats() {
     const metrics = await calculateStorageMetrics();
