@@ -108,7 +108,7 @@
         </div>
     </div>
 
-    <!-- MODAL: Paramètres & Menu Caché -->
+    <!-- MODAL: Paramètres -->
     <div class="modal-overlay" id="settingsModal">
         <div class="modal-card">
             <div class="modal-header">
@@ -116,12 +116,66 @@
                 <button class="close-modal" id="closeSettings">&times;</button>
             </div>
             <div class="modal-body">
-                <p>GameHub v1.0.1 - Plateforme Web3-Ready HTML5</p>
-                <div class="settings-nav">
-                    <button class="btn btn-secondary" id="learnMoreBtn" type="button">En savoir plus</button>
+                
+                <!-- Section 1: Apparence -->
+                <div class="settings-section">
+                    <h3>Apparence</h3>
+                    <div class="form-group">
+                        <label for="themeSelect">Thème de l'interface</label>
+                        <select id="themeSelect">
+                            <option value="dark">Sombre (Par défaut)</option>
+                            <option value="light">Clair</option>
+                            <option value="system">Système</option>
+                        </select>
+                    </div>
                 </div>
-                <div id="learnMoreSection" class="hidden-section">
-                    <p class="info-text">GameHub héberge des jeux HTML5 légers et vérifiés par hachage SHA-256 anti-doublon.</p>
+
+                <!-- Section 2: Supprimer les données de sauvegarde du navigateur -->
+                <div class="settings-section">
+                    <h3>Supprimer les données de sauvegarde du navigateur</h3>
+                    <p class="help-text">Efface le cache local, vos préférences et réinitialise les données temporaires.</p>
+                    <button class="btn btn-danger btn-sm" id="clearDataBtn" type="button">Effacer les données locales</button>
+                </div>
+
+                <!-- Section 3: Conditions d'utilisation -->
+                <div class="settings-section">
+                    <h3>Conditions d'utilisation</h3>
+                    <p class="info-text">En utilisant GameHub, vous acceptez de ne pas publier de contenu illégal, malveillant ou enfreignant les droits d'auteur. Les fichiers HTML soumis sont analysés par empreinte numérique SHA-256.</p>
+                </div>
+
+                <!-- Section 4: Aide -->
+                <div class="settings-section">
+                    <h3>Aide</h3>
+                    <p class="info-text">Un problème avec l'affichage d'un jeu ou l'envoi d'un fichier ? Assurez-vous que votre fichier est au format `.html` et ne dépasse pas la taille maximale autorisée.</p>
+                </div>
+
+                <!-- Section 5: Plus d'infos -->
+                <div class="settings-section">
+                    <h3>Plus d'infos</h3>
+                    <button class="btn btn-secondary" id="moreInfoBtn" type="button">Consulter plus d'informations</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Page "Plus d'infos" -->
+    <div class="modal-overlay" id="moreInfoModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2>Plus d'informations</h2>
+                <button class="close-modal" id="closeMoreInfo">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Zone de texte réservée pour votre rédaction -->
+                <div class="custom-text-area">
+                    <p>[ Insérez votre texte personnalisé ici. Vous pouvez rédiger l'histoire du projet, les crédits, la feuille de route technique ou toute autre précision relative à la plateforme GameHub. ]</p>
+                </div>
+
+                <hr class="separator">
+
+                <!-- Bouton Je suis développeur tout en bas du texte -->
+                <div class="dev-access-wrapper">
                     <button class="btn btn-link" id="devNavBtn" type="button">Je suis développeur</button>
                 </div>
             </div>
@@ -140,12 +194,12 @@
                 <div id="adminAuthSection">
                     <form id="adminLoginForm">
                         <div class="form-group">
-                            <label for="adminEmail">Email Administrateur</label>
-                            <input type="email" id="adminEmail" required>
+                            <label for="adminUsername">Nom d'utilisateur</label>
+                            <input type="text" id="adminUsername" required placeholder="Entrez votre identifiant">
                         </div>
                         <div class="form-group">
                             <label for="adminPassword">Mot de passe</label>
-                            <input type="password" id="adminPassword" required>
+                            <input type="password" id="adminPassword" required placeholder="Entrez votre mot de passe">
                         </div>
                         <button type="submit" class="btn btn-primary">Se Connecter</button>
                     </form>
