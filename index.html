@@ -27,16 +27,16 @@
     </header>
 
     <!-- Filtres par Catégorie -->
-    <nav class="categories-bar">
-        <button class="cat-chip active" data-category="ALL">Tous</button>
-        <button class="cat-chip" data-category="Action">Action</button>
-        <button class="cat-chip" data-category="Arcade">Arcade</button>
-        <button class="cat-chip" data-category="Puzzle">Puzzle</button>
-        <button class="cat-chip" data-category="Course">Course</button>
-        <button class="cat-chip" data-category="Simulation">Simulation</button>
-        <button class="cat-chip" data-category="FPS">FPS</button>
-        <button class="cat-chip" data-category="Plateforme">Plateforme</button>
-        <button class="cat-chip" data-category="Autre">Autre</button>
+    <nav class="categories-bar" aria-label="Catégories de jeux">
+        <button type="button" class="cat-chip active" data-category="ALL">Tous</button>
+        <button type="button" class="cat-chip" data-category="Action">Action</button>
+        <button type="button" class="cat-chip" data-category="Arcade">Arcade</button>
+        <button type="button" class="cat-chip" data-category="Puzzle">Puzzle</button>
+        <button type="button" class="cat-chip" data-category="Course">Course</button>
+        <button type="button" class="cat-chip" data-category="Simulation">Simulation</button>
+        <button type="button" class="cat-chip" data-category="FPS">FPS</button>
+        <button type="button" class="cat-chip" data-category="Plateforme">Plateforme</button>
+        <button type="button" class="cat-chip" data-category="Autre">Autre</button>
     </nav>
 
     <!-- Contenu Principal -->
@@ -51,7 +51,7 @@
         <div class="modal-card">
             <div class="modal-header">
                 <h2>Publier un Jeu</h2>
-                <button class="close-modal" id="closePublish">&times;</button>
+                <button type="button" class="close-modal" id="closePublish" aria-label="Fermer">&times;</button>
             </div>
             <form id="publishForm" class="modal-body">
                 <div class="form-group">
@@ -85,14 +85,14 @@
                 </div>
                 <div class="form-group">
                     <label for="gameThumb">Image Miniature (PNG/JPG) *</label>
-                    <input type="file" id="gameThumb" accept="image/*" required>
+                    <input type="file" id="gameThumb" accept="image/png, image/jpeg" required>
                 </div>
 
                 <!-- Conteneur Dynamique : Mode Fichier vs Link -->
                 <div id="dynamicUploadContainer">
                     <div class="form-group" id="fileGroup">
                         <label for="gameFile">Fichier du Jeu (HTML uniquement, Max 20 Mo) *</label>
-                        <input type="file" id="gameFile" accept=".html">
+                        <input type="file" id="gameFile" accept=".html, text/html">
                         <small class="help-text">Analyse d'empreinte SHA-256 automatique à l'envoi.</small>
                     </div>
                     <div class="form-group hidden" id="linkGroup">
@@ -113,7 +113,7 @@
         <div class="modal-card">
             <div class="modal-header">
                 <h2>Paramètres</h2>
-                <button class="close-modal" id="closeSettings">&times;</button>
+                <button type="button" class="close-modal" id="closeSettings" aria-label="Fermer">&times;</button>
             </div>
             <div class="modal-body">
                 
@@ -164,7 +164,7 @@
         <div class="modal-card">
             <div class="modal-header">
                 <h2>Plus d'informations</h2>
-                <button class="close-modal" id="closeMoreInfo">&times;</button>
+                <button type="button" class="close-modal" id="closeMoreInfo" aria-label="Fermer">&times;</button>
             </div>
             <div class="modal-body">
                 <!-- Zone de texte réservée pour votre rédaction -->
@@ -187,7 +187,7 @@
         <div class="modal-card modal-large">
             <div class="modal-header">
                 <h2>Meta Service - Administration</h2>
-                <button class="close-modal" id="closeAdmin">&times;</button>
+                <button type="button" class="close-modal" id="closeAdmin" aria-label="Fermer">&times;</button>
             </div>
             <div class="modal-body">
                 <!-- Zone Authentification Admin -->
@@ -208,11 +208,11 @@
                 <!-- Zone Tableau de Bord Admin -->
                 <div id="adminDashboardSection" class="hidden">
                     <div class="admin-tabs">
-                        <button class="admin-tab active" data-tab="tabRequests">Demandes (<span id="pendingCountBadge">0</span>)</button>
-                        <button class="admin-tab" data-tab="tabApproved">Jeux Acceptés</button>
-                        <button class="admin-tab" data-tab="tabStorage">Stockage & Stats</button>
-                        <button class="admin-tab" data-tab="tabLogs">Journal</button>
-                        <button class="btn btn-secondary btn-sm" id="adminLogoutBtn" type="button">Déconnexion</button>
+                        <button type="button" class="admin-tab active" data-tab="tabRequests">Demandes (<span id="pendingCountBadge">0</span>)</button>
+                        <button type="button" class="admin-tab" data-tab="tabApproved">Jeux Acceptés</button>
+                        <button type="button" class="admin-tab" data-tab="tabStorage">Stockage &amp; Stats</button>
+                        <button type="button" class="admin-tab" data-tab="tabLogs">Journal</button>
+                        <button type="button" class="btn btn-secondary btn-sm" id="adminLogoutBtn">Déconnexion</button>
                     </div>
 
                     <!-- Onglet 1: Demandes -->
@@ -230,7 +230,7 @@
                         <div class="storage-card">
                             <h3>Utilisation du Stockage Supabase</h3>
                             <div class="progress-bar-container">
-                                <div class="progress-bar" id="storageProgressBar" style="width: 0%;"></div>
+                                <div class="progress-bar" id="storageProgressBar"></div>
                             </div>
                             <div class="storage-metrics">
                                 <p><strong>Capacité Utilisée :</strong> <span id="storageUsedText">0 Mo</span> / 700 Mo (<span id="storagePercentText">0%</span>)</p>
@@ -238,7 +238,7 @@
                                 <p><strong>Réservation Sécurité :</strong> 100 Mo</p>
                                 <p><strong>Seuil Limite Fichiers (Mode Lien) :</strong> 700 Mo</p>
                             </div>
-                            <hr>
+                            <hr class="separator">
                             <div class="stats-metrics">
                                 <p><strong>Jeux Approuvés :</strong> <span id="statApprovedGames">0</span></p>
                                 <p><strong>Jeux en Attente :</strong> <span id="statPendingGames">0</span></p>
