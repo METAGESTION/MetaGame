@@ -101,6 +101,7 @@ body {
     justify-content: center;
     gap: 0.5rem;
     text-decoration: none;
+    user-select: none;
 }
 
 .btn-primary {
@@ -268,12 +269,14 @@ body {
     align-items: center;
     z-index: 1000;
     opacity: 0;
+    visibility: hidden;
     pointer-events: none;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
 .modal-overlay.active {
     opacity: 1;
+    visibility: visible;
     pointer-events: auto;
 }
 
@@ -492,6 +495,7 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     z-index: 2000;
     transition: var(--transition);
+    pointer-events: none;
 }
 
 .version-badge {
